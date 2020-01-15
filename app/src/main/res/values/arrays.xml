@@ -1,0 +1,32 @@
+<resources>
+    <!-- Reply Preference -->
+    <string-array name="reply_entries">
+        <item>Reply</item>
+        <item>Reply to all</item>
+    </string-array>
+
+    <string-array name="reply_values">
+        <item>reply</item>
+        <item>reply_all</item>
+    </string-array>
+    <string-array name="voice_list">
+        <item>GB female 1</item>
+        <item>GB female 2</item>
+        <item>GB male 1</item>
+        <item>GB male 2</item>
+        <item>US female 1</item>
+        <item>US female 2</item>
+        <item>US male 1</item>
+        <item>US male 2</item>
+    </string-array>
+    <string-array name="voice_values">
+        <item>gbf1</item>
+        <item>gbf2</item>
+        <item>gbm1</item>
+        <item>gbm2</item>
+        <item>usf1</item>
+        <item>usf2</item>
+        <item>usm1</item>
+        <item>usm2</item>
+    </string-array>
+</resources>
