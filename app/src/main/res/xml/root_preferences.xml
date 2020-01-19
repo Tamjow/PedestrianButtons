@@ -26,6 +26,7 @@
             app:summary="@string/voice_switch_summary"
             app:defaultValue="true" />
 
+
         <ListPreference
             app:defaultValue="gbf1"
             app:entries="@array/voice_list"
@@ -47,19 +48,15 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/sync_header">
+    <PreferenceCategory app:title="@string/download_header">
 
-        <SwitchPreferenceCompat
-            app:key="sync"
-            app:title="@string/sync_title" />
 
-        <SwitchPreferenceCompat
-            app:dependency="sync"
-            app:key="attachment"
-            app:summaryOff="@string/attachment_summary_off"
-            app:summaryOn="@string/attachment_summary_on"
-            app:title="@string/attachment_title" />
-
+        <MultiSelectListPreference
+            android:defaultValue="@array/region_defaults"
+            android:entries="@array/region_entries"
+            android:entryValues="@array/region_values"
+            android:key="multi_select_list_preference_1"
+            android:title="Cities" />
     </PreferenceCategory>
 
 </PreferenceScreen>

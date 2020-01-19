@@ -23,7 +23,7 @@ public class MainActivity extends AppCompatActivity {
         listButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                openButtonList();
+                openButtonPage();
             }
         });
         settingsButton = (Button) findViewById(R.id.button2);
@@ -36,8 +36,8 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void openButtonList() {
-        Intent intent = new Intent(this, ButtonList.class);
+    public void openButtonPage() {
+        Intent intent = new Intent(this, ButtonPage.class);
         startActivity(intent);
     }
 

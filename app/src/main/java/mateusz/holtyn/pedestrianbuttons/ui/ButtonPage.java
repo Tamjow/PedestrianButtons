@@ -7,6 +7,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -23,14 +25,28 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+
+import com.google.gson.Gson;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 import mateusz.holtyn.pedestrianbuttons.R;
 import mateusz.holtyn.pedestrianbuttons.bluetooth.BleScanner;
 import mateusz.holtyn.pedestrianbuttons.bluetooth.ScanResultsConsumer;
+import mateusz.holtyn.pedestrianbuttons.entity.ButtonEntity;
+import mateusz.holtyn.pedestrianbuttons.entity.ButtonList;
 
-public class ButtonList extends AppCompatActivity implements ScanResultsConsumer {
+public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer {
 
     private boolean ble_scanning = false;
     private ListAdapter ble_device_list_adapter;
@@ -40,7 +56,9 @@ public class ButtonList extends AppCompatActivity implements ScanResultsConsumer
     private boolean permissions_granted = false;
     private int device_count = 0;
     private Toast toast;
-
+    private TextView jsonText;
+    private Handler uiUpdater = null;
+    private Gson gson;
     static class ViewHolder {
         public TextView text;
         public TextView bdaddr;
@@ -50,16 +68,28 @@ public class ButtonList extends AppCompatActivity implements ScanResultsConsumer
     public static final String FIND = "FIND BLE DEVICES";
     public static final String STOP_SCANNING = "Stop Scanning";
     public static final String SCANNING = "Scanning";
+    // Debug log tag.
+    private static final String TAG_HTTP_URL_CONNECTION = "HTTP_URL_CONNECTION";
 
+    // Child thread sent message type value to activity main thread Handler.
+    private static final int REQUEST_CODE_SHOW_RESPONSE_TEXT = 1;
+
+    // The key of message stored server returned data.
+    private static final String KEY_RESPONSE_TEXT = "KEY_RESPONSE_TEXT";
+
+    // Request method GET. The value must be uppercase.
+    private static final String REQUEST_METHOD_GET = "GET";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_button_list);
-
+        setContentView(R.layout.activity_button_page);
+        initHandler();
         setButtonText();
+        gson = new Gson();
         ble_device_list_adapter = new ListAdapter();
         ListView listView = (ListView) this.findViewById(R.id.deviceList);
+        jsonText = this.findViewById(R.id.jsonText);
         listView.setAdapter(ble_device_list_adapter);
         ble_scanner = new BleScanner(this.getApplicationContext());
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -75,14 +105,14 @@ public class ButtonList extends AppCompatActivity implements ScanResultsConsumer
                     toast.cancel();
                 }
 
-                Intent intent = new Intent(ButtonList.this,
+                Intent intent = new Intent(ButtonPage.this,
                         PeripheralControlActivity.class);
                 intent.putExtra(PeripheralControlActivity.EXTRA_NAME, device.getName());
                 intent.putExtra(PeripheralControlActivity.EXTRA_ID, device.getAddress());
-
                 startActivity(intent);
             }
         });
+
     }
 
     private void setButtonText() {
@@ -92,7 +122,7 @@ public class ButtonList extends AppCompatActivity implements ScanResultsConsumer
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                ((TextView) ButtonList.this.findViewById(R.id.scanButton)).setText(button_text);
+                ((TextView) ButtonPage.this.findViewById(R.id.scanButton)).setText(button_text);
             }
         });
 
@@ -211,7 +241,7 @@ public class ButtonList extends AppCompatActivity implements ScanResultsConsumer
         public View getView(int i, View view, ViewGroup viewGroup) {
             ViewHolder viewHolder;
             if (view == null) {
-                view = ButtonList.this.getLayoutInflater().inflate(R.layout.list,
+                view = ButtonPage.this.getLayoutInflater().inflate(R.layout.list,
                         null);
                 viewHolder = new ViewHolder();
                 viewHolder.text = (TextView) view.findViewById(R.id.textView);
@@ -256,6 +286,7 @@ public class ButtonList extends AppCompatActivity implements ScanResultsConsumer
         }
     }
 
+
     private void requestLocationPermission() {
         Log.i(TAG, "Location permission has NOT yet been granted. Requesting permission.");
         if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
@@ -267,7 +298,7 @@ public class ButtonList extends AppCompatActivity implements ScanResultsConsumer
             builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
                 public void onDismiss(DialogInterface dialog) {
                     Log.d(TAG, "Requesting permissions after explanation");
-                    ActivityCompat.requestPermissions(ButtonList.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
+                    ActivityCompat.requestPermissions(ButtonPage.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
                 }
             });
             builder.show();
@@ -316,5 +347,135 @@ public class ButtonList extends AppCompatActivity implements ScanResultsConsumer
         } else {
             Log.i(TAG, "Permission to perform Bluetooth scanning was not yet granted");
         }
+    }
+
+    @SuppressLint("HandlerLeak")
+    private void initHandler() {
+        if (uiUpdater == null) {
+            uiUpdater = new Handler() {
+                @Override
+                public void handleMessage(Message msg) {
+                    if (msg.what == REQUEST_CODE_SHOW_RESPONSE_TEXT) {
+                        Bundle bundle = msg.getData();
+                        if (bundle != null) {
+                            String responseText = bundle.getString(KEY_RESPONSE_TEXT);
+                            ButtonList buttonList = new ButtonList();
+                            buttonList.setButtonList(new ArrayList<ButtonEntity>());
+                            buttonList = gson.fromJson(responseText, ButtonList.class);
+                            List<ButtonEntity> bList = buttonList.getButtonList();
+
+                            String test = bList.get(1).getLocation();
+                            for (ButtonEntity b : bList) {
+                                if (b.getId() != null && b.getId() == 5) {
+                                    test = b.getLocation();
+                                }
+                            }
+                            jsonText.setText(test);
+                            //jsonText.setText(responseText);
+                        }
+                    }
+                }
+            };
+        }
+    }
+
+    public void onGetJson(View view) {
+        String reqUrl = "http://185.107.143.31:8080/jerseymoxy/json";
+        startSendHttpRequestThread(reqUrl);
+    }
+
+    private void startSendHttpRequestThread(final String reqUrl) {
+        Thread sendHttpRequestThread = new Thread() {
+            @Override
+            public void run() {
+                // Maintain http url connection.
+                HttpURLConnection httpConn = null;
+
+                // Read text input stream.
+                InputStreamReader isReader = null;
+
+                // Read text into buffer.
+                BufferedReader bufReader = null;
+
+                // Save server response text.
+                StringBuffer readTextBuf = new StringBuffer();
+
+                try {
+                    // Create a URL object use page url.
+                    URL url = new URL(reqUrl);
+
+                    // Open http connection to web server.
+                    httpConn = (HttpURLConnection) url.openConnection();
+
+                    // Set http request method to get.
+                    httpConn.setRequestMethod(REQUEST_METHOD_GET);
+
+                    // Set connection timeout and read timeout value.
+                    httpConn.setConnectTimeout(10000);
+                    httpConn.setReadTimeout(10000);
+
+                    // Get input stream from web url connection.
+                    InputStream inputStream = httpConn.getInputStream();
+
+                    // Create input stream reader based on url connection input stream.
+                    isReader = new InputStreamReader(inputStream);
+
+                    // Create buffered reader.
+                    bufReader = new BufferedReader(isReader);
+
+                    // Read line of text from server response.
+                    String line = bufReader.readLine();
+
+                    // Loop while return line is not null.
+                    while (line != null) {
+                        // Append the text to string buffer.
+                        readTextBuf.append(line);
+
+                        // Continue to read text line.
+                        line = bufReader.readLine();
+                    }
+
+                    // Send message to main thread to update response text in TextView after read all.
+                    Message message = new Message();
+
+                    // Set message type.
+                    message.what = REQUEST_CODE_SHOW_RESPONSE_TEXT;
+
+                    // Create a bundle object.
+                    Bundle bundle = new Bundle();
+                    // Put response text in the bundle with the special key.
+                    bundle.putString(KEY_RESPONSE_TEXT, readTextBuf.toString());
+                    // Set bundle data in message.
+                    message.setData(bundle);
+                    // Send message to main thread Handler to process.
+                    uiUpdater.sendMessage(message);
+                } catch (MalformedURLException ex) {
+                    Log.e(TAG_HTTP_URL_CONNECTION, ex.getMessage(), ex);
+                } catch (IOException ex) {
+                    Log.e(TAG_HTTP_URL_CONNECTION, ex.getMessage(), ex);
+                } finally {
+                    try {
+                        if (bufReader != null) {
+                            bufReader.close();
+                            bufReader = null;
+                        }
+
+                        if (isReader != null) {
+                            isReader.close();
+                            isReader = null;
+                        }
+
+                        if (httpConn != null) {
+                            httpConn.disconnect();
+                            httpConn = null;
+                        }
+                    } catch (IOException ex) {
+                        Log.e(TAG_HTTP_URL_CONNECTION, ex.getMessage(), ex);
+                    }
+                }
+            }
+        };
+        // Start the child thread to request web page.
+        sendHttpRequestThread.start();
     }
 }

@@ -15,7 +15,7 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
-import mateusz.holtyn.pedestrianbuttons.ui.ButtonList;
+import mateusz.holtyn.pedestrianbuttons.ui.ButtonPage;
 
 public class BleScanner {
     private BluetoothLeScanner scanner = null;
@@ -33,29 +33,29 @@ public class BleScanner {
         bluetooth_adapter = bluetoothManager.getAdapter();
 // check bluetooth is available and on
         if (bluetooth_adapter == null || !bluetooth_adapter.isEnabled()) {
-            Log.d(ButtonList.TAG, "Bluetooth is NOT switched on");
+            Log.d(ButtonPage.TAG, "Bluetooth is NOT switched on");
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             enableBtIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(enableBtIntent);
         }
-        Log.d(ButtonList.TAG, "Bluetooth is switched on");
+        Log.d(ButtonPage.TAG, "Bluetooth is switched on");
     }
 
     public void startScanning(final ScanResultsConsumer scan_results_consumer, long stop_after_ms) {
         if (scanning) {
-            Log.d(ButtonList.TAG, "Already scanning so ignoring startScanning request");
+            Log.d(ButtonPage.TAG, "Already scanning so ignoring startScanning request");
             return;
         }
-        Log.d(ButtonList.TAG, "Scanning...");
+        Log.d(ButtonPage.TAG, "Scanning...");
         if (scanner == null) {
             scanner = bluetooth_adapter.getBluetoothLeScanner();
-            Log.d(ButtonList.TAG, "Created BluetoothScanner object");
+            Log.d(ButtonPage.TAG, "Created BluetoothScanner object");
         }
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 if (scanning) {
-                    Log.d(ButtonList.TAG, "Stopping scanning");
+                    Log.d(ButtonPage.TAG, "Stopping scanning");
                     scanner.stopScan(scan_callback);
                     setScanning(false);
                 }
@@ -74,7 +74,7 @@ public class BleScanner {
 
     public void stopScanning() {
         setScanning(false);
-        Log.d(ButtonList.TAG, "Stopping scanning");
+        Log.d(ButtonPage.TAG, "Stopping scanning");
         scanner.stopScan(scan_callback);
     }
 
@@ -84,7 +84,7 @@ public class BleScanner {
                 return;
             }
             scan_results_consumer.candidateBleDevice(result.getDevice(), result.getScanRecord().getBytes(), result.getRssi());
-            Log.d(ButtonList.TAG, "scan callback device added, rssi: " + result.getRssi());
+            Log.d(ButtonPage.TAG, "scan callback device added, rssi: " + result.getRssi());
         }
     };
 

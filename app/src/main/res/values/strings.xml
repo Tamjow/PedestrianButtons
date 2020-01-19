@@ -5,15 +5,15 @@
     <string name="action_settings">Settings</string>
     <!-- Preference Titles -->
     <string name="voice_header">Voice</string>
-    <string name="sync_header">Sync</string>
+    <string name="download_header">Download</string>
 
 
     <string name="signature_title">Your signature</string>
     <string name="reply_title">Default reply action</string>
 
     <string name="voice_settings_title">Voice selection</string>
-    <string name="voice_switch_title">Auto read button names after connecting</string>
-    <string name="voice_switch_summary">Choose whether or not to automatically read a button\'s name after connecting to it</string>
+    <string name="voice_switch_title">Auto read buttonList names after connecting</string>
+    <string name="voice_switch_summary">Choose whether or not to automatically read a buttonList\'s name after connecting to it</string>
     <string name="voice_speed_title">Voice speed</string>
 
     <!-- Sync Preferences -->

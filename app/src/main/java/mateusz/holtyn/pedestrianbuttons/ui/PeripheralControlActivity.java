@@ -37,6 +37,7 @@ public class PeripheralControlActivity extends Activity {
     public static final String EXTRA_ID = "id";
     private String device_name;
     private String device_address;
+    private Integer device_id;
     private double distance;
     private Timer mTimer;
     private Handler beepHandler;
@@ -109,7 +110,7 @@ public class PeripheralControlActivity extends Activity {
                     boolean custom_service_two = false;
 
                     for (BluetoothGattService svc : slist) {
-                        Log.d(ButtonList.TAG,
+                        Log.d(ButtonPage.TAG,
                                 "UUID=" + svc.getUuid().toString().toUpperCase() + " INSTANCE=" + svc.getInstanceId());
                         if (svc.getUuid().toString().equalsIgnoreCase(BleAdapterService.CUSTOM_SERVICE_ONE)) {
                             custom_service_one = true;
@@ -138,12 +139,12 @@ public class PeripheralControlActivity extends Activity {
                     bundle = msg.getData();
                     int rssi = bundle.getInt(BleAdapterService.PARCEL_RSSI);
                     PeripheralControlActivity.this.updateRssi(rssi);
-                    Log.d(ButtonList.TAG, "reading remote rssi " + rssi);
+                    Log.d(ButtonPage.TAG, "reading remote rssi " + rssi);
                     break;
 
                 case BleAdapterService.GATT_CHARACTERISTIC_READ:
                     bundle = msg.getData();
-                    Log.d(ButtonList.TAG,
+                    Log.d(ButtonPage.TAG,
                             "Service=" + bundle.get(BleAdapterService.PARCEL_SERVICE_UUID).toString().toUpperCase()
                                     + " Characteristic="
                                     + bundle.get(BleAdapterService.PARCEL_CHARACTERISTIC_UUID).toString().toUpperCase());
@@ -154,7 +155,7 @@ public class PeripheralControlActivity extends Activity {
                         b = bundle.getByteArray(BleAdapterService.PARCEL_VALUE);
                         assert b != null;
                         if (b.length > 0) {
-                            Log.d(ButtonList.TAG, "b.length if entered (GATT_CHARACTERISTIC_READ) b[0]: " + b[0]);
+                            Log.d(ButtonPage.TAG, "b.length if entered (GATT_CHARACTERISTIC_READ) b[0]: " + b[0]);
                             // show the rssi distance colored rectangle
                             PeripheralControlActivity.this.findViewById(R.id.rectangle)
                                     .setVisibility(View.VISIBLE);
@@ -166,7 +167,7 @@ public class PeripheralControlActivity extends Activity {
                     break;
                 case BleAdapterService.GATT_CHARACTERISTIC_WRITTEN:
                     bundle = msg.getData();
-                    Log.d(ButtonList.TAG,
+                    Log.d(ButtonPage.TAG,
                             "Service=" + bundle.get(BleAdapterService.PARCEL_SERVICE_UUID).toString().toUpperCase()
                                     + " Characteristic="
                                     + bundle.get(BleAdapterService.PARCEL_CHARACTERISTIC_UUID).toString().toUpperCase());
@@ -175,7 +176,7 @@ public class PeripheralControlActivity extends Activity {
                             && bundle.get(BleAdapterService.PARCEL_SERVICE_UUID).toString().toUpperCase()
                             .equals(BleAdapterService.CUSTOM_SERVICE_ONE)) {
                         b = bundle.getByteArray(BleAdapterService.PARCEL_VALUE);
-                        Log.d(ButtonList.TAG, "b.length if entered (GATT_CHARACTERISTIC_WRITTEN) b[0]: " + b[0]);
+                        Log.d(ButtonPage.TAG, "b.length if entered (GATT_CHARACTERISTIC_WRITTEN) b[0]: " + b[0]);
                     }
                     break;
 
@@ -195,28 +196,13 @@ public class PeripheralControlActivity extends Activity {
         final Intent intent = getIntent();
         device_name = intent.getStringExtra(EXTRA_NAME);
         device_address = intent.getStringExtra(EXTRA_ID);
-        // initialize tts
-        textToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int status) {
-                if (status == TextToSpeech.SUCCESS) {
-                    int ttsLang = textToSpeech.setLanguage(Locale.ENGLISH);
-
-                    if (ttsLang == TextToSpeech.LANG_MISSING_DATA
-                            || ttsLang == TextToSpeech.LANG_NOT_SUPPORTED) {
-                        Log.e("TTS", "The Language is not supported!");
-                    } else {
-                        Log.i("TTS", "Language Supported.");
-                    }
-                    Log.i("TTS", "Initialization success.");
-                } else {
-                    Toast.makeText(getApplicationContext(), "TTS Initialization failed!", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-
+        // get device id from name
+        getId();
+        //initialize tts
+        initTTS();
         // show the device name
         nameAddress = "Device : " + device_name + " [" + device_address + "]";
+
         ((TextView) this.findViewById(R.id.nameTextView))
                 .setText(nameAddress);
         // hide the coloured rectangle used to show green/amber/red rssi distance
@@ -260,7 +246,7 @@ public class PeripheralControlActivity extends Activity {
     }
 
     public void onBackPressed() {
-        Log.d(ButtonList.TAG, "onBackPressed");
+        Log.d(ButtonPage.TAG, "onBackPressed");
         back_requested = true;
         if (bluetooth_le_adapter.isConnected()) {
             try {
@@ -280,7 +266,7 @@ public class PeripheralControlActivity extends Activity {
                 mp.start(); //this function can change value of mInterval.
             } finally {
                 // 100% guarantee that this always happens, even if
-                // your update method throws an exception
+                // the update method throws an exception
                 beepHandler.postDelayed(mBeeper, mInterval);
             }
         }
@@ -318,7 +304,7 @@ public class PeripheralControlActivity extends Activity {
     }
 
     private void showMsg(final String msg) {
-        Log.d(ButtonList.TAG, msg);
+        Log.d(ButtonPage.TAG, msg);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -490,6 +476,33 @@ public class PeripheralControlActivity extends Activity {
                 textToSpeech.setVoice(voice);
                 break;
         }
+    }
+
+    private void getId() {
+        String idZerosString = device_name.substring(3); //remove KSK from the name to get id with leading zeroes
+        idZerosString = idZerosString.replaceFirst("^0+(?!$)", ""); //remove leading zeroes using regex
+        device_id = Integer.parseInt(idZerosString); //convert id string to final integer id
+    }
+
+    private void initTTS() {
+        textToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if (status == TextToSpeech.SUCCESS) {
+                    int ttsLang = textToSpeech.setLanguage(Locale.ENGLISH);
+
+                    if (ttsLang == TextToSpeech.LANG_MISSING_DATA
+                            || ttsLang == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        Log.e("TTS", "The Language is not supported!");
+                    } else {
+                        Log.i("TTS", "Language Supported.");
+                    }
+                    Log.i("TTS", "Initialization success.");
+                } else {
+                    Toast.makeText(getApplicationContext(), "TTS Initialization failed!", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
 
