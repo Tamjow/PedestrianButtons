@@ -48,15 +48,11 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/download_header">
+    <PreferenceCategory app:title="@string/update_header">
 
-
-        <MultiSelectListPreference
-            android:defaultValue="@array/region_defaults"
-            android:entries="@array/region_entries"
-            android:entryValues="@array/region_values"
-            android:key="multi_select_list_preference_1"
-            android:title="Cities" />
+        <Preference
+            android:title="Update button database"
+            android:key="downloadJsonButton" />
     </PreferenceCategory>
 
 </PreferenceScreen>

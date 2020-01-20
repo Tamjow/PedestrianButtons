@@ -370,7 +370,9 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
                                     test = b.getLocation();
                                 }
                             }
-                            jsonText.setText(test);
+                            Integer testversion = buttonList.getVersion();
+                            jsonText.setText(responseText);
+//                            jsonText.setText(test+" version: "+testversion);
                             //jsonText.setText(responseText);
                         }
                     }
@@ -451,8 +453,10 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
                     uiUpdater.sendMessage(message);
                 } catch (MalformedURLException ex) {
                     Log.e(TAG_HTTP_URL_CONNECTION, ex.getMessage(), ex);
+                    jsonText.setText("failed to connect to server");
                 } catch (IOException ex) {
                     Log.e(TAG_HTTP_URL_CONNECTION, ex.getMessage(), ex);
+                    jsonText.setText("failed to connect to server");
                 } finally {
                     try {
                         if (bufReader != null) {

@@ -5,7 +5,7 @@
     <string name="action_settings">Settings</string>
     <!-- Preference Titles -->
     <string name="voice_header">Voice</string>
-    <string name="download_header">Download</string>
+    <string name="update_header">Update</string>
 
 
     <string name="signature_title">Your signature</string>
