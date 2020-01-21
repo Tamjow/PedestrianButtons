@@ -134,11 +134,11 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
         setScanState(false);
     }
 
-    private static BigDecimal truncateDecimal(double x, int numberofDecimals) {
+    private static BigDecimal truncateDecimal(double x) {
         if (x > 0) {
-            return new BigDecimal(String.valueOf(x)).setScale(numberofDecimals, BigDecimal.ROUND_FLOOR);
+            return new BigDecimal(String.valueOf(x)).setScale(2, BigDecimal.ROUND_FLOOR);
         } else {
-            return new BigDecimal(String.valueOf(x)).setScale(numberofDecimals, BigDecimal.ROUND_CEILING);
+            return new BigDecimal(String.valueOf(x)).setScale(2, BigDecimal.ROUND_CEILING);
         }
     }
 
@@ -246,7 +246,7 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
             }
             // viewHolder.bdaddr.setText("RSSI = "+rssi_val);
             //viewHolder.bdaddr.setText("distance = "+truncateDecimal(distance,2) +"m"+" RSSI = "+rssi_val);
-            viewHolder.bdaddr.setText(truncateDecimal(distance, 2) + "m");
+            viewHolder.bdaddr.setText(truncateDecimal(distance) + "m");
             return view;
         }
     }

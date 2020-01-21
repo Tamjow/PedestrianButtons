@@ -371,11 +371,11 @@ public class PeripheralControlActivity extends Activity {
         }
     }
 
-    private static BigDecimal truncateDecimal(double x, int numberofDecimals) {
+    private static BigDecimal truncateDecimal(double x) {
         if (x > 0) {
-            return new BigDecimal(String.valueOf(x)).setScale(numberofDecimals, BigDecimal.ROUND_FLOOR);
+            return new BigDecimal(String.valueOf(x)).setScale(2, BigDecimal.ROUND_FLOOR);
         } else {
-            return new BigDecimal(String.valueOf(x)).setScale(numberofDecimals, BigDecimal.ROUND_CEILING);
+            return new BigDecimal(String.valueOf(x)).setScale(2, BigDecimal.ROUND_CEILING);
         }
     }
 
@@ -398,7 +398,7 @@ public class PeripheralControlActivity extends Activity {
     private void updateRssi(int rssi) {
         //((TextView) findViewById(R.id.rssiTextView)).setText("RSSI = " + Integer.toString(rssi));
         distance = calculateDistance(rssi);
-        String distanceRssi = "distance = " + truncateDecimal(distance, 2) + "m rssi: " + rssi;
+        String distanceRssi = "distance = " + truncateDecimal(distance) + "m rssi: " + rssi;
         ((TextView) findViewById(R.id.rssiTextView)).setText(distanceRssi);
         LinearLayout layout = PeripheralControlActivity.this.findViewById(R.id.rectangle);
 
