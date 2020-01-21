@@ -26,6 +26,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import mateusz.holtyn.pedestrianbuttons.R;
 import mateusz.holtyn.pedestrianbuttons.entity.ButtonEntity;
@@ -61,7 +62,6 @@ public class SettingsActivity extends AppCompatActivity {
         private Handler uiUpdater = null;
         private Gson gson;
         private Preference updateButton;
-        private Preference testResponse;
         private SharedPreferences sharedPreferences;
         private SharedPreferences.Editor editor;
 
@@ -71,7 +71,7 @@ public class SettingsActivity extends AppCompatActivity {
             initHandler();
             gson = new Gson();
             seekBar = findPreference("voicespeed");
-            sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            sharedPreferences = PreferenceManager.getDefaultSharedPreferences(Objects.requireNonNull(getActivity()));
             editor = sharedPreferences.edit();
             valueString = String.valueOf(seekBar.getValue());
             seekBar.setSummary(convertValue(valueString));

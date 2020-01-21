@@ -256,6 +256,11 @@ public class PeripheralControlActivity extends Activity {
 
     }
 
+    public void resetVersion() {
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putInt("version", 0);
+        editor.apply();
+    }
     public void onBackPressed() {
         Log.d(ButtonPage.TAG, "onBackPressed");
         back_requested = true;
