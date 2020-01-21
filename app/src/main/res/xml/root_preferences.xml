@@ -26,7 +26,6 @@
             app:summary="@string/voice_switch_summary"
             app:defaultValue="true" />
 
-
         <ListPreference
             app:defaultValue="gbf1"
             app:entries="@array/voice_list"
@@ -51,8 +50,10 @@
     <PreferenceCategory app:title="@string/update_header">
 
         <Preference
-            android:title="Update button database"
-            android:key="downloadJsonButton" />
+            android:title="Check for database update"
+            android:key="checkUpdateButton"
+            android:summary="If an update is found, it will be applied automatically" />
+
     </PreferenceCategory>
 
 </PreferenceScreen>

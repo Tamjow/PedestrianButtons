@@ -31,12 +31,6 @@
     </ListView>
 
 
-    <TextView
-        android:id="@+id/jsonText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="jsontext" />
-
     <Button
         android:id="@+id/scanButton"
         android:layout_width="fill_parent"
@@ -45,12 +39,5 @@
         android:gravity="center"
         android:onClick="onScan"
         android:text="" />
-
-    <Button
-        android:id="@+id/jsonButton"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="download json"
-        android:onClick="onGetJson" />
 
 </LinearLayout>

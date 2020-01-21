@@ -12,8 +12,8 @@
     <string name="reply_title">Default reply action</string>
 
     <string name="voice_settings_title">Voice selection</string>
-    <string name="voice_switch_title">Auto read buttonList names after connecting</string>
-    <string name="voice_switch_summary">Choose whether or not to automatically read a buttonList\'s name after connecting to it</string>
+    <string name="voice_switch_title">Auto read button location</string>
+    <string name="voice_switch_summary">Choose whether or not to automatically read a button\'s location after connecting to it</string>
     <string name="voice_speed_title">Voice speed</string>
 
     <!-- Sync Preferences -->

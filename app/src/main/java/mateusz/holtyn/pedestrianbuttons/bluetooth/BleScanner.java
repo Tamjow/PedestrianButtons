@@ -63,13 +63,13 @@ public class BleScanner {
         }, stop_after_ms);
 
         this.scan_results_consumer = scan_results_consumer;
-        List<ScanFilter> filters;
-        filters = new ArrayList<ScanFilter>();
-        //ScanFilter filter = new ScanFilter.Builder().setDeviceName("KSK0001").build();
-        // filters.add(filter);
+//        List<ScanFilter> filters;
+//        filters = new ArrayList<ScanFilter>();
+//        //ScanFilter filter = new ScanFilter.Builder().setDeviceName("KSK0001").build();
+//        // filters.add(filter);
         ScanSettings settings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
         setScanning(true);
-        scanner.startScan(filters, settings, scan_callback);
+        scanner.startScan(null, settings, scan_callback);
     }
 
     public void stopScanning() {

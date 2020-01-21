@@ -23,7 +23,10 @@ import android.widget.Toast;
 
 import androidx.preference.PreferenceManager;
 
+import com.google.gson.Gson;
+
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
@@ -31,6 +34,8 @@ import java.util.TimerTask;
 
 import mateusz.holtyn.pedestrianbuttons.R;
 import mateusz.holtyn.pedestrianbuttons.bluetooth.BleAdapterService;
+import mateusz.holtyn.pedestrianbuttons.entity.ButtonEntity;
+import mateusz.holtyn.pedestrianbuttons.entity.ButtonList;
 
 public class PeripheralControlActivity extends Activity {
     public static final String EXTRA_NAME = "name";
@@ -50,6 +55,8 @@ public class PeripheralControlActivity extends Activity {
     private BleAdapterService bluetooth_le_adapter;
     private TextToSpeech textToSpeech;
     private SharedPreferences sharedPref;
+    private Gson gson;
+    private String location;
     private final ServiceConnection service_connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
@@ -189,6 +196,8 @@ public class PeripheralControlActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_peripheral_control);
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        PreferenceManager.setDefaultValues(this, R.xml.root_preferences, false);
         String nameAddress;
         beepHandler = new Handler();
         timeDelay = new Handler();
@@ -198,10 +207,12 @@ public class PeripheralControlActivity extends Activity {
         device_address = intent.getStringExtra(EXTRA_ID);
         // get device id from name
         getId();
+        //get button's location based on id
+        getLocation();
         //initialize tts
         initTTS();
         // show the device name
-        nameAddress = "Device : " + device_name + " [" + device_address + "]";
+        nameAddress = "Device : " + device_name + " [" + device_address + "] id: " + device_id;
 
         ((TextView) this.findViewById(R.id.nameTextView))
                 .setText(nameAddress);
@@ -233,8 +244,8 @@ public class PeripheralControlActivity extends Activity {
         // connect to the Bluetooth adapter service
         Intent gattServiceIntent = new Intent(this, BleAdapterService.class);
         bindService(gattServiceIntent, service_connection, BIND_AUTO_CREATE);
-        PreferenceManager.setDefaultValues(this, R.xml.root_preferences, false);
-        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+
+
         showMsg("Ready");
         timeDelay.postDelayed(new Runnable() {
             @Override
@@ -272,6 +283,15 @@ public class PeripheralControlActivity extends Activity {
         }
     };
 
+    void getLocation() {
+        String locations = sharedPref.getString("locations", "no locations");
+        gson = new Gson();
+        ButtonList newButtonList = new ButtonList();
+        newButtonList.setButtonList(new ArrayList<ButtonEntity>());
+        newButtonList = gson.fromJson(locations, ButtonList.class);
+        List<ButtonEntity> newBList = newButtonList.getButtonList();
+        location = newBList.get(device_id).getLocation();
+    }
     void startBeep() {
         mBeeper.run();
     }
@@ -288,14 +308,14 @@ public class PeripheralControlActivity extends Activity {
     public void readDeviceName() {
         updateVoice();
         if (device_name != null) {
-            String ttsString = "the device name is: " + device_name;
+            String ttsString = "you are on " + location;
             Log.i("TTS", "button clicked: " + ttsString);
             int speechStatus = textToSpeech.speak(ttsString, TextToSpeech.QUEUE_FLUSH, null, "deviceNameTts");
             if (speechStatus == TextToSpeech.ERROR) {
                 Log.e("TTS", "Error in converting Text to Speech!");
             }
         } else {
-            int speechStatus = textToSpeech.speak("device name is empty", TextToSpeech.QUEUE_FLUSH, null, "deviceNameEmptyTts");
+            int speechStatus = textToSpeech.speak("location not found", TextToSpeech.QUEUE_FLUSH, null, "deviceNameEmptyTts");
             if (speechStatus == TextToSpeech.ERROR) {
                 Log.e("TTS", "Error in converting Text to Speech!");
             }
@@ -360,7 +380,7 @@ public class PeripheralControlActivity extends Activity {
     }
 
     public double calculateDistance(int rssi) {
-        int txPower = -65; //hard coded power value. Usually ranges between -59 to -65
+        int txPower = -59; //hard coded power value. Usually ranges between -59 to -65
 
         if (rssi == 0) {
             return -1.0;

@@ -12,16 +12,15 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.PreferenceManager;
 import androidx.preference.SeekBarPreference;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -59,20 +58,21 @@ public class SettingsActivity extends AppCompatActivity {
         private static final int REQUEST_CODE_SHOW_RESPONSE_TEXT = 1;// Child thread sent message type value to activity main thread Handler.
         private static final String KEY_RESPONSE_TEXT = "KEY_RESPONSE_TEXT";// The key of message stored server returned data.
         private static final String REQUEST_METHOD_GET = "GET";// Request method GET. The value must be uppercase.
-        private static final String PREFS_TAG = "SharedPrefs";
-        private static final String JSON_TAG = "myJson";
         private Handler uiUpdater = null;
         private Gson gson;
-        private Preference button;
-        private SharedPreferences sharedPreferences = getContext().getSharedPreferences(PREFS_TAG, Context.MODE_PRIVATE);
-        private SharedPreferences.Editor editor = sharedPreferences.edit();
+        private Preference updateButton;
+        private Preference testResponse;
+        private SharedPreferences sharedPreferences;
+        private SharedPreferences.Editor editor;
+
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey);
             initHandler();
             gson = new Gson();
             seekBar = findPreference("voicespeed");
-
+            sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            editor = sharedPreferences.edit();
             valueString = String.valueOf(seekBar.getValue());
             seekBar.setSummary(convertValue(valueString));
             seekBar.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
@@ -82,8 +82,8 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            button = findPreference("downloadJsonButton");
-            button.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            updateButton = findPreference("checkUpdateButton");
+            updateButton.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
                     onGetJson();
@@ -92,17 +92,6 @@ public class SettingsActivity extends AppCompatActivity {
             });
         }
 
-        public void setList(String key, List<ButtonEntity> list) {
-            Gson gson = new Gson();
-            String json = gson.toJson(list);
-
-            set(key, json);
-        }
-
-        public void set(String key, String value) {
-            editor.putString(key, value);
-            editor.commit();
-        }
 
         public String convertValue(String value) {
             Float valueFloat = (float) (Float.parseFloat(value) * 0.1);
@@ -127,19 +116,13 @@ public class SettingsActivity extends AppCompatActivity {
                                 List<ButtonEntity> newBList = newButtonList.getButtonList();
                                 Integer downloadedVersion = newButtonList.getVersion();
                                 if (downloadedVersion > savedVersion) {
-                                    savedVersion = downloadedVersion;
-                                    editor.putInt("version", savedVersion);
+                                    editor.putInt("version", downloadedVersion);
                                     editor.putString("locations", responseText);
+                                    editor.commit();
+                                    updateButton.setSummary("Update found and applied");
+                                } else {
+                                    updateButton.setSummary("Your database is up to date!");
                                 }
-
-                                String test = newBList.get(1).getLocation();
-                                for (ButtonEntity b : newBList) {
-                                    if (b.getId() != null && b.getId() == 5) {
-                                        test = b.getLocation();
-                                    }
-                                }
-
-                                button.setTitle(test + " version: " + downloadedVersion);
                             }
                         }
                     }
@@ -183,10 +166,10 @@ public class SettingsActivity extends AppCompatActivity {
                         uiUpdater.sendMessage(message); // Send message to main thread Handler to process.
                     } catch (MalformedURLException ex) {
                         Log.e(TAG_HTTP_URL_CONNECTION, ex.getMessage(), ex);
-                        button.setTitle("failed to connect to server");
+                        updateButton.setTitle("failed to connect to server");
                     } catch (IOException ex) {
                         Log.e(TAG_HTTP_URL_CONNECTION, ex.getMessage(), ex);
-                        button.setTitle("failed to connect to server");
+                        updateButton.setTitle("failed to connect to server");
                     } finally {
                         try {
                             if (bufReader != null) {
