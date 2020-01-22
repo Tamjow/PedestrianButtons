@@ -33,23 +33,14 @@
 
     </LinearLayout>
 
-    <Button
-        android:id="@+id/connectButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="26dp"
-        android:onClick="onConnect"
-        android:text="Connect" />
-
     <TextView
         android:id="@+id/msgTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/connectButton"
+        android:layout_above="@+id/ttsButton"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="16dp"
+        android:layout_marginBottom="104dp"
         android:text="" />
 
     <Button
@@ -74,18 +65,65 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="22dp"
         android:enabled="false"
-        android:text=":)" />
+        android:text="stop beeping" />
 
     <Button
         android:id="@+id/ttsButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginStart="34dp"
-        android:layout_marginBottom="26dp"
-        android:layout_toEndOf="@+id/connectButton"
-        android:text="TTS"
-        android:onClick="onTTS" />
+        android:layout_marginEnd="6dp"
+        android:layout_marginBottom="34dp"
+        android:onClick="onTTS"
+        android:text="TTS" />
+
+    <EditText
+        android:importantForAutofill="no"
+        android:id="@+id/passwordSettings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/highButton"
+        android:layout_marginBottom="54dp"
+        android:layout_centerHorizontal="true"
+        android:hint="admin PIN"
+        android:ems="10"
+        android:inputType="numberPassword"
+        android:maxLength="4" />
+
+    <Button
+        android:id="@+id/lowButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="35dp"
+        android:enabled="false"
+        android:text="LOW"
+        android:visibility="invisible" />
+
+    <Button
+        android:id="@+id/midButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="18dp"
+        android:layout_marginBottom="35dp"
+        android:layout_toEndOf="@+id/lowButton"
+        android:enabled="false"
+        android:text="MID"
+        android:visibility="invisible" />
+
+    <Button
+        android:id="@+id/highButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="21dp"
+        android:layout_marginBottom="35dp"
+        android:layout_toEndOf="@+id/midButton"
+        android:enabled="false"
+        android:text="HIGH"
+        android:visibility="invisible" />
 
 
 </RelativeLayout>

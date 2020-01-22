@@ -93,10 +93,9 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
 
-        public String convertValue(String value) {
-            Float valueFloat = (float) (Float.parseFloat(value) * 0.1);
-            String valueString = "×" + (valueFloat);
-            return valueString;
+        String convertValue(String value) {
+            float valueFloat = (float) (Float.parseFloat(value) * 0.1);
+            return "×" + valueFloat;
         }
 
         @SuppressLint("HandlerLeak")
@@ -119,9 +118,11 @@ public class SettingsActivity extends AppCompatActivity {
                                     editor.putInt("version", downloadedVersion);
                                     editor.putString("locations", responseText);
                                     editor.commit();
+                                    String updateSummary = "Update found and applied, old version: " + savedVersion + " new version: " + downloadedVersion;
                                     updateButton.setSummary("Update found and applied");
                                 } else {
-                                    updateButton.setSummary("Your database is up to date!");
+                                    String noUpdateSummary = "Your database is up to date!, current version: " + savedVersion + ", server version: " + downloadedVersion;
+                                    updateButton.setSummary(noUpdateSummary);
                                 }
                             }
                         }

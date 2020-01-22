@@ -164,7 +164,7 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
             @Override
             public void run() {
 
-                if (device.getName() != null && device.getName().contains("KSK")) {
+                if (device.getName() != null && device.getName().contains("KSK") && rssi > -70) {
                     ble_device_list_adapter.addDevice(device, rssi);
                     Log.d(TAG, "candidate ble device being added, rssi: " + rssi + " addr: " + device.getAddress());
                     ble_device_list_adapter.notifyDataSetChanged();

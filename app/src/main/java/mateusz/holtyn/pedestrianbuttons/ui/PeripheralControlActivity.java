@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.bluetooth.BluetoothGattService;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -15,8 +16,13 @@ import android.os.Message;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.Voice;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -49,7 +55,10 @@ public class PeripheralControlActivity extends Activity {
     private Handler timeDelay;
     private MediaPlayer mp;
     private String voiceName;
+    private Button lowButton, midButton, highButton;
+    private EditText passwordText;
     private Voice voice;
+    private Toast toast;
     private int mInterval = 100;
     private boolean back_requested = false;
     private BleAdapterService bluetooth_le_adapter;
@@ -86,7 +95,6 @@ public class PeripheralControlActivity extends Activity {
                     showMsg(text);
                     break;
                 case BleAdapterService.GATT_CONNECTED:
-                    PeripheralControlActivity.this.findViewById(R.id.connectButton).setEnabled(false);
                     PeripheralControlActivity.this.findViewById(R.id.startBeepingButton).setEnabled(true);
                     // we're connected
                     showMsg("CONNECTED");
@@ -94,7 +102,6 @@ public class PeripheralControlActivity extends Activity {
                     break;
 
                 case BleAdapterService.GATT_DISCONNECT:
-                    PeripheralControlActivity.this.findViewById(R.id.connectButton).setEnabled(true);
                     // we're disconnected
                     showMsg("DISCONNECTED");
                     // hide the rssi distance colored rectangle
@@ -191,6 +198,13 @@ public class PeripheralControlActivity extends Activity {
         }
     };
 
+    private void closeKeyboard() {
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -201,6 +215,37 @@ public class PeripheralControlActivity extends Activity {
         String nameAddress;
         beepHandler = new Handler();
         timeDelay = new Handler();
+        lowButton = findViewById(R.id.lowButton);
+        midButton = findViewById(R.id.midButton);
+        highButton = findViewById(R.id.highButton);
+        passwordText = findViewById(R.id.passwordSettings);
+        passwordText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+
+                if (passwordText.getText().toString().equals("6875")) {
+                    closeKeyboard();
+                    lowButton.setVisibility(View.VISIBLE);
+                    lowButton.setEnabled(true);
+                    midButton.setVisibility(View.VISIBLE);
+                    midButton.setEnabled(true);
+                    highButton.setVisibility(View.VISIBLE);
+                    highButton.setEnabled(true);
+                    passwordText.setVisibility(View.INVISIBLE);
+                    simpleToast("PIN correct", 2000);
+                } else if (passwordText.getText().toString().isEmpty()) {
+                    passwordText.setText(null);
+                    closeKeyboard();
+                    simpleToast("PIN empty", 2000);
+                } else {
+                    passwordText.setText(null);
+                    closeKeyboard();
+                    simpleToast("Wrong pin", 2000);
+                }
+
+                return true;
+            }
+        });
         // read intent data
         final Intent intent = getIntent();
         device_name = intent.getStringExtra(EXTRA_NAME);
@@ -225,7 +270,7 @@ public class PeripheralControlActivity extends Activity {
             @Override
             public void onClick(View v) {
                 startBeep();
-                ((Button) findViewById(R.id.stopBeepingButton)).setText("OH GOD STOP THE BEEP");
+                ((Button) findViewById(R.id.stopBeepingButton)).setText("Stop beeping");
                 findViewById(R.id.stopBeepingButton).setEnabled(true);
                 findViewById(R.id.startBeepingButton).setEnabled(false);
             }
@@ -234,7 +279,7 @@ public class PeripheralControlActivity extends Activity {
             @Override
             public void onClick(View v) {
                 stopBeep();
-                ((Button) findViewById(R.id.stopBeepingButton)).setText(":)");
+                ((Button) findViewById(R.id.stopBeepingButton)).setText("Stop beeping");
                 findViewById(R.id.stopBeepingButton).setEnabled(false);
                 findViewById(R.id.startBeepingButton).setEnabled(true);
             }
@@ -342,7 +387,6 @@ public class PeripheralControlActivity extends Activity {
         showMsg("Connecting...");
         if (bluetooth_le_adapter != null) {
             if (bluetooth_le_adapter.connect(device_address)) {
-                PeripheralControlActivity.this.findViewById(R.id.connectButton).setEnabled(false);
                 if (sharedPref.getBoolean(SettingsActivity.KEY_PREF_AUTOVOICE, true)) {
                     readDeviceName();
                 }
@@ -530,5 +574,10 @@ public class PeripheralControlActivity extends Activity {
         });
     }
 
+    private void simpleToast(String message, int duration) {
+        toast = Toast.makeText(this, message, duration);
+        toast.setGravity(Gravity.CENTER, 0, 0);
+        toast.show();
+    }
 
 }
