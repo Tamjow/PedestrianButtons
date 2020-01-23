@@ -44,6 +44,7 @@ public class SettingsActivity extends AppCompatActivity {
                 .beginTransaction()
                 .replace(R.id.settings, new SettingsFragment())
                 .commit();
+        setTheme(R.style.CustomPreferenceTheme);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
@@ -64,6 +65,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+
             setPreferencesFromResource(R.xml.root_preferences, rootKey);
             initHandler();
             gson = new Gson();

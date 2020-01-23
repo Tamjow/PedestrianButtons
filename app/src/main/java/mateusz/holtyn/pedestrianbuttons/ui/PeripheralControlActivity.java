@@ -47,6 +47,7 @@ import mateusz.holtyn.pedestrianbuttons.entity.ButtonList;
 public class PeripheralControlActivity extends Activity {
     public static final String EXTRA_NAME = "name";
     public static final String EXTRA_ID = "id";
+    private static final String PINCODE = "9318";
     private String device_name;
     private String device_address;
     private Integer device_id;
@@ -63,6 +64,7 @@ public class PeripheralControlActivity extends Activity {
     private TextToSpeech textToSpeech;
     private SharedPreferences sharedPref;
     private String location;
+    private boolean isBeeping = false;
     private final ServiceConnection service_connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
@@ -100,8 +102,7 @@ public class PeripheralControlActivity extends Activity {
                     // we're disconnected
                     showMsg("DISCONNECTED");
                     // hide the rssi distance colored rectangle
-                    PeripheralControlActivity.this.findViewById(R.id.rectangle)
-                            .setVisibility(View.INVISIBLE);
+
                     PeripheralControlActivity.this.findViewById(R.id.startBeepingButton).setEnabled(false);
                     // stop the rssi reading timer
                     stopTimer();
@@ -129,9 +130,7 @@ public class PeripheralControlActivity extends Activity {
                     if (led_brightness_service) {
                         showMsg("Device has expected services");
                         startReadRssiTimer();
-                        // show the rssi distance colored rectangle
-                        PeripheralControlActivity.this.findViewById(R.id.rectangle)
-                                .setVisibility(View.VISIBLE);
+
 
                         bluetooth_le_adapter.readCharacteristic(BleAdapterService.LED_BRIGHTNESS_SERVICE,
                                 BleAdapterService.LED_BRIGHTNESS_CHARACTERISTIC);
@@ -220,7 +219,7 @@ public class PeripheralControlActivity extends Activity {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 
-                if (passwordText.getText().toString().equals("9318")) {
+                if (passwordText.getText().toString().equals(PINCODE)) {
                     closeKeyboard();
                     lowButton.setVisibility(View.VISIBLE);
                     lowButton.setEnabled(true);
@@ -254,34 +253,28 @@ public class PeripheralControlActivity extends Activity {
         //initialize tts
         initTTS();
         // show the device name
-        nameAddress = "Device : " + device_name + " [" + device_address + "] id: " + device_id;
+        nameAddress = "DEVICE NAME: " + device_name;
 
         ((TextView) this.findViewById(R.id.nameTextView))
                 .setText(nameAddress);
-        // hide the coloured rectangle used to show green/amber/red rssi distance
-        this.findViewById(R.id.rectangle).setVisibility(View.INVISIBLE);
-        Button stopBeeping = this.findViewById(R.id.stopBeepingButton);
-        Button startBeeping = this.findViewById(R.id.startBeepingButton);
+
+        final Button startBeeping = this.findViewById(R.id.startBeepingButton);
         mp = MediaPlayer.create(this, R.raw.beeploud);
         startBeeping.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startBeep();
-                ((Button) findViewById(R.id.stopBeepingButton)).setText("Stop beeping");
-                findViewById(R.id.stopBeepingButton).setEnabled(true);
-                findViewById(R.id.startBeepingButton).setEnabled(false);
-            }
-        });
-        stopBeeping.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                stopBeep();
-                ((Button) findViewById(R.id.stopBeepingButton)).setText("Stop beeping");
-                findViewById(R.id.stopBeepingButton).setEnabled(false);
-                findViewById(R.id.startBeepingButton).setEnabled(true);
-            }
-        });
+                if (!isBeeping) {
+                    startBeep();
+                    startBeeping.setText("Stop beeping");
+                    isBeeping = true;
+                } else {
+                    stopBeep();
+                    startBeeping.setText("Start beeping");
+                    isBeeping = false;
+                }
 
+            }
+        });
 
         // connect to the Bluetooth adapter service
         Intent gattServiceIntent = new Intent(this, BleAdapterService.class);
@@ -322,6 +315,7 @@ public class PeripheralControlActivity extends Activity {
         editor.putInt("version", 0);
         editor.apply();
     }
+
     public void onBackPressed() {
         Log.d(ButtonPage.TAG, "onBackPressed");
         back_requested = true;
@@ -393,12 +387,6 @@ public class PeripheralControlActivity extends Activity {
 
     private void showMsg(final String msg) {
         Log.d(ButtonPage.TAG, msg);
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                ((TextView) findViewById(R.id.msgTextView)).setText(msg);
-            }
-        });
     }
 
     private void connectToButton() {
@@ -415,7 +403,6 @@ public class PeripheralControlActivity extends Activity {
             showMsg("connectToButton: bluetooth_le_adapter=null");
         }
     }
-
 
 
     private void startReadRssiTimer() {
@@ -462,8 +449,8 @@ public class PeripheralControlActivity extends Activity {
 
     private void updateRssi(int rssi) {
         distance = calculateDistance(rssi);
-        String distanceRssi = "distance = " + truncateDecimal(distance) + "m rssi: " + rssi;
-        ((TextView) findViewById(R.id.rssiTextView)).setText(distanceRssi);
+        String distanceRssi = truncateDecimal(distance) + "m";
+        ((TextView) findViewById(R.id.distanceTextView)).setText(distanceRssi);
         LinearLayout layout = PeripheralControlActivity.this.findViewById(R.id.rectangle);
 
         if (rssi < -80) {
@@ -479,11 +466,15 @@ public class PeripheralControlActivity extends Activity {
         }
 
         if (rssi < -80) {
-            layout.setBackgroundColor(0xFFFF0000);
+            layout.setBackgroundColor(0xFFF44336);
+        } else if (rssi < -70) {
+            layout.setBackgroundColor(0xFFFF5722);
         } else if (rssi < -60) {
-            layout.setBackgroundColor(0xFFFF8A01);
+            layout.setBackgroundColor(0xFFFFEB3B);
+        } else if (rssi < -55) {
+            layout.setBackgroundColor(0xFFCDDC39);
         } else {
-            layout.setBackgroundColor(0xFF00FF00);
+            layout.setBackgroundColor(0xFF8BC34A);
         }
         layout.invalidate();
 

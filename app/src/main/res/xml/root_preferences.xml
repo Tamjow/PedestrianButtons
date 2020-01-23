@@ -17,16 +17,20 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory app:title="@string/voice_header">
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="@string/voice_header">
 
 
         <SwitchPreferenceCompat
             app:key="autovoice"
             app:title="@string/voice_switch_title"
             app:summary="@string/voice_switch_summary"
-            app:defaultValue="true" />
+            app:defaultValue="true"
+            app:iconSpaceReserved="false" />
 
         <ListPreference
+            app:iconSpaceReserved="false"
             app:defaultValue="gbf1"
             app:entries="@array/voice_list"
             app:entryValues="@array/voice_values"
@@ -35,6 +39,7 @@
             app:useSimpleSummaryProvider="true" />
 
         <SeekBarPreference
+            app:iconSpaceReserved="false"
             app:title="@string/voice_speed_title"
             app:key="voicespeed"
             app:updatesContinuously="true"
@@ -47,9 +52,12 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/update_header">
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="@string/update_header">
 
         <Preference
+            app:iconSpaceReserved="false"
             android:title="Check for database update"
             android:key="checkUpdateButton"
             android:summary="If an update is found, it will be applied automatically" />

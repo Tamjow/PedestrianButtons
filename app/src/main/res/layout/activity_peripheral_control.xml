@@ -2,131 +2,136 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="#34000000">
 
     <TextView
         android:id="@+id/nameTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_below="@+id/rectangle"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="15dp"
-        android:text="name" />
+        android:layout_marginTop="5dp"
+        android:text="name"
+        android:textColor="#000000"
+        android:textSize="25sp" />
 
     <TextView
-        android:id="@+id/rssiTextView"
+        android:id="@+id/distanceTextStatic"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/nameTextView"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="16dp" />
+        android:layout_marginTop="5dp"
+        android:text="DISTANCE"
+        android:textSize="30sp"
+        android:textColor="#000000" />
+    <TextView
+        android:id="@+id/distanceTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/distanceTextStatic"
+        android:layout_centerHorizontal="true"
+        android:text="0.00m"
+        android:textSize="50sp"
+        android:textColor="#000000" />
 
     <LinearLayout
         android:id="@+id/rectangle"
-        android:layout_width="200dp"
-        android:layout_height="60dp"
-        android:layout_below="@+id/rssiTextView"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="21dp"
-        android:background="#FF0000"
-        android:orientation="vertical"
-        android:padding="10dp">
+        android:layout_width="fill_parent"
+        android:layout_height="130dp"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="0dp"
+        android:background="#F44336"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Distance marker"
+            android:textColor="#000000"
+            android:textSize="23sp" />
 
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/msgTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/ttsButton"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="104dp"
-        android:text="" />
 
     <Button
         android:id="@+id/startBeepingButton"
         android:layout_width="fill_parent"
-        android:layout_height="80dp"
-        android:layout_above="@+id/stopBeepingButton"
-        android:layout_alignParentStart="true"
+        android:layout_height="120dp"
+        android:layout_below="@+id/distanceTextView"
         android:layout_alignParentEnd="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="22dp"
+        android:layout_marginTop="10dp"
+        android:background="#9200A6FF"
         android:enabled="false"
-        android:text="beep" />
-
-    <Button
-        android:id="@+id/stopBeepingButton"
-        android:layout_width="fill_parent"
-        android:layout_height="80dp"
-        android:layout_above="@+id/msgTextView"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentEnd="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="22dp"
-        android:enabled="false"
-        android:text="stop beeping" />
+        android:text="beep"
+        android:textSize="50sp" />
 
     <Button
         android:id="@+id/ttsButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="fill_parent"
+        android:layout_height="120dp"
+        android:layout_below="@+id/startBeepingButton"
         android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginEnd="6dp"
-        android:layout_marginBottom="34dp"
+        android:layout_marginTop="9dp"
         android:onClick="onTTS"
-        android:text="TTS" />
+        android:text="READ LOCATION"
+        android:background="#AED581"
+        android:textSize="50sp" />
 
     <EditText
         android:importantForAutofill="no"
         android:id="@+id/passwordSettings"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/highButton"
-        android:layout_marginBottom="54dp"
+        android:layout_below="@+id/ttsButton"
+        android:layout_marginTop="30dp"
         android:layout_centerHorizontal="true"
         android:hint="admin PIN"
         android:ems="10"
         android:inputType="numberPassword"
         android:maxLength="4" />
 
-    <Button
-        android:id="@+id/lowButton"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="35dp"
-        android:enabled="false"
-        android:text="LOW"
-        android:onClick="onLow"
-        android:visibility="invisible" />
+        android:layout_below="@+id/passwordSettings"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="40dp"
+        android:orientation="horizontal"
+        android:gravity="center">
 
-    <Button
-        android:id="@+id/midButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_marginStart="18dp"
-        android:layout_marginBottom="35dp"
-        android:layout_toEndOf="@+id/lowButton"
-        android:enabled="false"
-        android:text="MID"
-        android:onClick="onMid"
-        android:visibility="invisible" />
+        <Button
+            android:id="@+id/lowButton"
+            android:layout_width="wrap_content"
+            android:layout_height="60dp"
+            android:enabled="false"
+            android:text="LOW"
+            android:layout_weight="1"
+            android:onClick="onLow"
+            android:visibility="invisible" />
 
-    <Button
-        android:id="@+id/highButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_marginStart="21dp"
-        android:layout_marginBottom="35dp"
-        android:layout_toEndOf="@+id/midButton"
-        android:enabled="false"
-        android:text="HIGH"
-        android:onClick="onHigh"
-        android:visibility="invisible" />
+        <Button
+            android:id="@+id/midButton"
+            android:layout_width="wrap_content"
+            android:layout_height="60dp"
+            android:layout_weight="1"
+            android:enabled="false"
+            android:text="MID"
+            android:onClick="onMid"
+            android:visibility="invisible" />
+
+        <Button
+            android:id="@+id/highButton"
+            android:layout_width="wrap_content"
+            android:layout_height="60dp"
+            android:layout_weight="1"
+            android:enabled="false"
+            android:text="HIGH"
+            android:onClick="onHigh"
+            android:visibility="invisible" />
+    </LinearLayout>
 
 
 </RelativeLayout>

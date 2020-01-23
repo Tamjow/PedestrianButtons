@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
@@ -45,7 +46,7 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
     }
 
     public static final String TAG = "PedestrianButtons";
-    public static final String FIND = "FIND BLE DEVICES";
+    public static final String FIND = "SEARCH AGAIN";
     public static final String STOP_SCANNING = "Stop Scanning";
     public static final String SCANNING = "Scanning";
 
@@ -147,7 +148,6 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
                     Log.d(TAG, "candidate ble device being added, rssi: " + rssi + " addr: " + device.getAddress());
                     ble_device_list_adapter.notifyDataSetChanged();
 
-                    // rssiVal=rssi;
                 }
             }
         });
@@ -205,7 +205,7 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
                         null);
                 viewHolder = new ViewHolder();
                 viewHolder.text = view.findViewById(R.id.textView);
-                viewHolder.distance = view.findViewById(R.id.bdaddr);
+                viewHolder.distance = view.findViewById(R.id.distanceText);
                 view.setTag(viewHolder);
             } else {
                 viewHolder = (ViewHolder) view.getTag();
@@ -217,9 +217,19 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
             if (deviceName != null && deviceName.length() > 0) {
                 viewHolder.text.setText(deviceName);
             } else {
-                viewHolder.text.setText("Unknown device");
+//                viewHolder.text.setText("Unknown device");
+                viewHolder.text.setText("TEST123");
             }
             viewHolder.distance.setText(truncateDecimal(distance) + "m");
+            if (i % 2 == 1) {
+                view.setBackgroundColor(Color.parseColor("#4CAF50"));
+                viewHolder.distance.setTextColor(Color.BLACK);
+                viewHolder.text.setTextColor(Color.BLACK);
+            } else {
+                view.setBackgroundColor(Color.parseColor("#3C3F41"));
+                viewHolder.distance.setTextColor(Color.WHITE);
+                viewHolder.text.setTextColor(Color.WHITE);
+            }
             return view;
         }
     }
