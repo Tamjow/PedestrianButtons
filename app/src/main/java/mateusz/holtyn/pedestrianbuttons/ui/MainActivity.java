@@ -11,22 +11,20 @@ import mateusz.holtyn.pedestrianbuttons.R;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button listButton, settingsButton;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        listButton = (Button) findViewById(R.id.button1);
+        Button listButton = findViewById(R.id.button1);
         listButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 openButtonPage();
             }
         });
-        settingsButton = (Button) findViewById(R.id.button2);
+        Button settingsButton = findViewById(R.id.button2);
         settingsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -36,12 +34,12 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void openButtonPage() {
+    private void openButtonPage() {
         Intent intent = new Intent(this, ButtonPage.class);
         startActivity(intent);
     }
 
-    public void openSettings() {
+    private void openSettings() {
         Intent intent = new Intent(this, SettingsActivity.class);
         startActivity(intent);
     }

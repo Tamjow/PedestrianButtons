@@ -7,8 +7,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -25,28 +23,12 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
-
-import com.google.gson.Gson;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Array;
 import java.math.BigDecimal;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 import mateusz.holtyn.pedestrianbuttons.R;
 import mateusz.holtyn.pedestrianbuttons.bluetooth.BleScanner;
 import mateusz.holtyn.pedestrianbuttons.bluetooth.ScanResultsConsumer;
-import mateusz.holtyn.pedestrianbuttons.entity.ButtonEntity;
-import mateusz.holtyn.pedestrianbuttons.entity.ButtonList;
 
 public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer {
 
@@ -56,11 +38,10 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
     private static final long SCAN_TIMEOUT = 5000;
     private static final int REQUEST_LOCATION = 0;
     private boolean permissions_granted = false;
-    private int device_count = 0;
     private Toast toast;
     static class ViewHolder {
-        public TextView text;
-        public TextView bdaddr;
+        TextView text;
+        TextView distance;
     }
 
     public static final String TAG = "PedestrianButtons";
@@ -74,7 +55,7 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
         setContentView(R.layout.activity_button_page);
         setButtonText();
         ble_device_list_adapter = new ListAdapter();
-        ListView listView = (ListView) this.findViewById(R.id.deviceList);
+        ListView listView = this.findViewById(R.id.deviceList);
         listView.setAdapter(ble_device_list_adapter);
         ble_scanner = new BleScanner(this.getApplicationContext());
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -102,13 +83,10 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
     }
 
     private void setButtonText() {
-        String text = "";
-        text = FIND;
-        final String button_text = text;
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                ((TextView) ButtonPage.this.findViewById(R.id.scanButton)).setText(button_text);
+                ((TextView) ButtonPage.this.findViewById(R.id.scanButton)).setText(FIND);
             }
         });
 
@@ -168,7 +146,6 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
                     ble_device_list_adapter.addDevice(device, rssi);
                     Log.d(TAG, "candidate ble device being added, rssi: " + rssi + " addr: " + device.getAddress());
                     ble_device_list_adapter.notifyDataSetChanged();
-                    device_count++;
 
                     // rssiVal=rssi;
                 }
@@ -180,12 +157,13 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
         private ArrayList<BluetoothDevice> ble_devices;
         private ArrayList<Integer> rssi_values;
 
-        public ListAdapter() {
+        ListAdapter() {
             super();
-            ble_devices = new ArrayList<BluetoothDevice>();
-            rssi_values = new ArrayList<Integer>();
+            ble_devices = new ArrayList<>();
+            rssi_values = new ArrayList<>();
         }
-        public void addDevice(BluetoothDevice device, Integer rssiValue) {
+
+        void addDevice(BluetoothDevice device, Integer rssiValue) {
             if (!ble_devices.contains(device)) {
                 Log.d("addDevice", "rssiValue: " + rssiValue + " device name: " + device.getName());
                 ble_devices.add(device);
@@ -193,15 +171,12 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
             }
         }
 
-        public boolean contains(BluetoothDevice device) {
-            return ble_devices.contains(device);
-        }
 
-        public BluetoothDevice getDevice(int position) {
+        BluetoothDevice getDevice(int position) {
             return ble_devices.get(position);
         }
 
-        public void clear() {
+        void clear() {
             ble_devices.clear();
             rssi_values.clear();
         }
@@ -229,8 +204,8 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
                 view = ButtonPage.this.getLayoutInflater().inflate(R.layout.list,
                         null);
                 viewHolder = new ViewHolder();
-                viewHolder.text = (TextView) view.findViewById(R.id.textView);
-                viewHolder.bdaddr = (TextView) view.findViewById(R.id.bdaddr);
+                viewHolder.text = view.findViewById(R.id.textView);
+                viewHolder.distance = view.findViewById(R.id.bdaddr);
                 view.setTag(viewHolder);
             } else {
                 viewHolder = (ViewHolder) view.getTag();
@@ -238,15 +213,13 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
             BluetoothDevice device = ble_devices.get(i);
             Integer rssi_val = rssi_values.get(i);
             String deviceName = device.getName();
-            Double distance = calculateDistance(rssi_val);
+            double distance = calculateDistance(rssi_val);
             if (deviceName != null && deviceName.length() > 0) {
                 viewHolder.text.setText(deviceName);
             } else {
-                viewHolder.text.setText("unknown device");
+                viewHolder.text.setText("Unknown device");
             }
-            // viewHolder.bdaddr.setText("RSSI = "+rssi_val);
-            //viewHolder.bdaddr.setText("distance = "+truncateDecimal(distance,2) +"m"+" RSSI = "+rssi_val);
-            viewHolder.bdaddr.setText(truncateDecimal(distance) + "m");
+            viewHolder.distance.setText(truncateDecimal(distance) + "m");
             return view;
         }
     }
@@ -254,7 +227,6 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
     public void onScan(View view) {
         if (!ble_scanner.isScanning()) {
             Log.d(TAG, "Not currently scanning");
-            device_count = 0;
             if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
                     != PackageManager.PERMISSION_GRANTED) {
                 permissions_granted = false;
@@ -274,7 +246,6 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
     public void onScanNoArg() {
         if (!ble_scanner.isScanning()) {
             Log.d(TAG, "Not currently scanning");
-            device_count = 0;
             if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
                     != PackageManager.PERMISSION_GRANTED) {
                 permissions_granted = false;
@@ -331,8 +302,8 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
         }
     }
 
-    private void simpleToast(String message, int duration) {
-        toast = Toast.makeText(this, message, duration);
+    private void simpleToast(String message) {
+        toast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
         toast.setGravity(Gravity.CENTER, 0, 0);
         toast.show();
     }
@@ -346,7 +317,7 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
                     ble_device_list_adapter.notifyDataSetChanged();
                 }
             });
-            simpleToast(SCANNING, 2000);
+            simpleToast(SCANNING);
             ble_scanner.startScanning(this, SCAN_TIMEOUT);
         } else {
             Log.i(TAG, "Permission to perform Bluetooth scanning was not yet granted");

@@ -1,14 +1,6 @@
 <resources>
     <!-- Reply Preference -->
-    <string-array name="reply_entries">
-        <item>Reply</item>
-        <item>Reply to all</item>
-    </string-array>
 
-    <string-array name="reply_values">
-        <item>reply</item>
-        <item>reply_all</item>
-    </string-array>
     <string-array name="voice_list">
         <item>GB female 1</item>
         <item>GB female 2</item>
@@ -18,17 +10,6 @@
         <item>US female 2</item>
         <item>US male 1</item>
         <item>US male 2</item>
-    </string-array>
-    <string-array name="region_defaults" />
-    <string-array name="region_entries">
-        <item>zabrze</item>
-        <item>gliwice</item>
-        <item>tg</item>
-    </string-array>
-    <string-array name="region_values">
-        <item>reg1</item>
-        <item>reg2</item>
-        <item>reg3</item>
     </string-array>
     <string-array name="voice_values">
         <item>gbf1</item>

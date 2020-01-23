@@ -99,6 +99,7 @@
         android:layout_marginBottom="35dp"
         android:enabled="false"
         android:text="LOW"
+        android:onClick="onLow"
         android:visibility="invisible" />
 
     <Button
@@ -111,6 +112,7 @@
         android:layout_toEndOf="@+id/lowButton"
         android:enabled="false"
         android:text="MID"
+        android:onClick="onMid"
         android:visibility="invisible" />
 
     <Button
@@ -123,6 +125,7 @@
         android:layout_toEndOf="@+id/midButton"
         android:enabled="false"
         android:text="HIGH"
+        android:onClick="onHigh"
         android:visibility="invisible" />
 
 

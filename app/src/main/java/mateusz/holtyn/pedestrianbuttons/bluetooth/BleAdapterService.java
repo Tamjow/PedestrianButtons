@@ -6,17 +6,15 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
-import android.content.Intent;
 import android.content.Context;
-import android.os.Handler;
+import android.content.Intent;
 import android.os.Binder;
-import android.os.IBinder;
-
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.util.Log;
 
@@ -29,8 +27,6 @@ public class BleAdapterService extends Service {
     private BluetoothGatt bluetooth_gatt;
     private BluetoothManager bluetooth_manager;
     private Handler activity_handler = null;
-    private BluetoothDevice device;
-    private BluetoothGattDescriptor descriptor;
     private boolean connected = false;
     // messages sent back to activity
     public static final int GATT_CONNECTED = 1;
@@ -41,27 +37,19 @@ public class BleAdapterService extends Service {
     public static final int GATT_REMOTE_RSSI = 6;
     public static final int MESSAGE = 7;
     public static final int NOTIFICATION_OR_INDICATION_RECEIVED = 8;
-    // message parms
-//    public static final String PARCEL_DESCRIPTOR_UUID = "DESCRIPTOR_UUID";
+    // message params
     public static final String PARCEL_CHARACTERISTIC_UUID = "CHARACTERISTIC_UUID";
     public static final String PARCEL_SERVICE_UUID = "SERVICE_UUID";
     public static final String PARCEL_VALUE = "VALUE";
     public static final String PARCEL_RSSI = "RSSI";
     public static final String PARCEL_TEXT = "TEXT";
 
-    public static String CUSTOM_SERVICE_ONE = "02366E80-CF3A-11E1-9AB4-0002A5D5C51B";
-    public static String CUSTOM_SERVICE_ONE_CHARACTERISTIC = "E23E78A0-CF4A-11E1-8FFC-0002A5D5C51B";
-    public static String CUSTOM_SERVICE_TWO = "42821A40-E477-11E2-82D0-0002A5D5C51B";
-    //
-//    public static String LINK_LOSS_SERVICE_UUID = "00001803-0000-1000-8000-00805F9B34FB";
-//    public static String TX_POWER_SERVICE_UUID = "00001804-0000-1000-8000-00805F9B34FB";
-//    public static String PROXIMITY_MONITORING_SERVICE_UUID = "3E099910-293F-11E4-93BDAFD0FE6D1DFD";
-//    public static String HEALTH_THERMOMETER_SERVICE_UUID = "00001809-0000-1000-8000-00805F9B34FB";
-//    // service characteristics
-//    public static String ALERT_LEVEL_CHARACTERISTIC = "00002A06-0000-1000-8000-00805F9B34FB";
-//    public static String CLIENT_PROXIMITY_CHARACTERISTIC = "3E099911-293F-11E4-93BDAFD0FE6D1DFD";
-//    public static String TEMPERATURE_MEASUREMENT_CHARACTERISTIC = "00002A1C-0000-1000-8000-00805F9B34FB";
-//    public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
+    public static final String LED_BRIGHTNESS_SERVICE = "02366E80-CF3A-11E1-9AB4-0002A5D5C51B";
+    public static final String LED_BRIGHTNESS_CHARACTERISTIC = "E23E78A0-CF4A-11E1-8FFC-0002A5D5C51B";
+    public static final byte[] LED_BRIGHTNESS_LOW = {(byte) 0x00};
+    public static final byte[] LED_BRIGHTNESS_MID = {(byte) 0x01};
+    public static final byte[] LED_BRIGHTNESS_HIGH = {(byte) 0x02};
+
     private final IBinder binder = new LocalBinder();
 
     public class LocalBinder extends Binder {
@@ -118,7 +106,7 @@ public class BleAdapterService extends Service {
             return false;
         }
 
-        device = bluetooth_adapter.getRemoteDevice(address);
+        BluetoothDevice device = bluetooth_adapter.getRemoteDevice(address);
         if (device == null) {
             sendConsoleMessage("connect: device=null");
             return false;

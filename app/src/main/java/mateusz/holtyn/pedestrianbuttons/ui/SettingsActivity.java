@@ -1,12 +1,12 @@
 package mateusz.holtyn.pedestrianbuttons.ui;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,10 +22,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 import mateusz.holtyn.pedestrianbuttons.R;
@@ -54,7 +52,6 @@ public class SettingsActivity extends AppCompatActivity {
 
     public static class SettingsFragment extends PreferenceFragmentCompat {
         private SeekBarPreference seekBar;
-        private String valueString;
         private static final String TAG_HTTP_URL_CONNECTION = "HTTP_URL_CONNECTION";// Debug log tag.
         private static final int REQUEST_CODE_SHOW_RESPONSE_TEXT = 1;// Child thread sent message type value to activity main thread Handler.
         private static final String KEY_RESPONSE_TEXT = "KEY_RESPONSE_TEXT";// The key of message stored server returned data.
@@ -73,7 +70,7 @@ public class SettingsActivity extends AppCompatActivity {
             seekBar = findPreference("voicespeed");
             sharedPreferences = PreferenceManager.getDefaultSharedPreferences(Objects.requireNonNull(getActivity()));
             editor = sharedPreferences.edit();
-            valueString = String.valueOf(seekBar.getValue());
+            String valueString = String.valueOf(seekBar.getValue());
             seekBar.setSummary(convertValue(valueString));
             seekBar.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
@@ -112,14 +109,13 @@ public class SettingsActivity extends AppCompatActivity {
                                 ButtonList newButtonList = new ButtonList();
                                 newButtonList.setButtonList(new ArrayList<ButtonEntity>());
                                 newButtonList = gson.fromJson(responseText, ButtonList.class);
-                                List<ButtonEntity> newBList = newButtonList.getButtonList();
                                 Integer downloadedVersion = newButtonList.getVersion();
                                 if (downloadedVersion > savedVersion) {
                                     editor.putInt("version", downloadedVersion);
                                     editor.putString("locations", responseText);
                                     editor.commit();
                                     String updateSummary = "Update found and applied, old version: " + savedVersion + " new version: " + downloadedVersion;
-                                    updateButton.setSummary("Update found and applied");
+                                    updateButton.setSummary(updateSummary);
                                 } else {
                                     String noUpdateSummary = "Your database is up to date!, current version: " + savedVersion + ", server version: " + downloadedVersion;
                                     updateButton.setSummary(noUpdateSummary);
@@ -131,7 +127,7 @@ public class SettingsActivity extends AppCompatActivity {
             }
         }
 
-        public void onGetJson() {
+        private void onGetJson() {
             String reqUrl = "http://185.107.143.31:8080/jerseymoxy/json";
             startSendHttpRequestThread(reqUrl);
         }
@@ -143,7 +139,7 @@ public class SettingsActivity extends AppCompatActivity {
                     HttpURLConnection httpConn = null;// Maintain http url connection.
                     InputStreamReader isReader = null;// Read text input stream.
                     BufferedReader bufReader = null;// Read text into buffer.
-                    StringBuffer readTextBuf = new StringBuffer();// Save server response text.
+                    StringBuilder readTextBuf = new StringBuilder();// Save server response text.
 
                     try {
                         URL url = new URL(reqUrl);// Create a URL object use page url.
@@ -165,28 +161,34 @@ public class SettingsActivity extends AppCompatActivity {
                         bundle.putString(KEY_RESPONSE_TEXT, readTextBuf.toString());// Put response text in the bundle with the special key.
                         message.setData(bundle); // Set bundle data in message.
                         uiUpdater.sendMessage(message); // Send message to main thread Handler to process.
-                    } catch (MalformedURLException ex) {
-                        Log.e(TAG_HTTP_URL_CONNECTION, ex.getMessage(), ex);
-                        updateButton.setTitle("failed to connect to server");
                     } catch (IOException ex) {
                         Log.e(TAG_HTTP_URL_CONNECTION, ex.getMessage(), ex);
-                        updateButton.setTitle("failed to connect to server");
+                        Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getContext(), "Can't connect, database potentially down", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+
                     } finally {
                         try {
                             if (bufReader != null) {
                                 bufReader.close();
-                                bufReader = null;
                             }
                             if (isReader != null) {
                                 isReader.close();
-                                isReader = null;
                             }
                             if (httpConn != null) {
                                 httpConn.disconnect();
-                                httpConn = null;
                             }
                         } catch (IOException ex) {
                             Log.e(TAG_HTTP_URL_CONNECTION, ex.getMessage(), ex);
+                            Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(getContext(), "Can't connect, database potentially down", Toast.LENGTH_SHORT).show();
+                                }
+                            });
                         }
                     }
                 }

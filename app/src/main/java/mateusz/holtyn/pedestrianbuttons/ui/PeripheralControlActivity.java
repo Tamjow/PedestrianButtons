@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,7 +20,6 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -35,6 +35,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -52,19 +53,15 @@ public class PeripheralControlActivity extends Activity {
     private double distance;
     private Timer mTimer;
     private Handler beepHandler;
-    private Handler timeDelay;
     private MediaPlayer mp;
-    private String voiceName;
     private Button lowButton, midButton, highButton;
     private EditText passwordText;
-    private Voice voice;
-    private Toast toast;
+    private int led_brightness;
     private int mInterval = 100;
     private boolean back_requested = false;
     private BleAdapterService bluetooth_le_adapter;
     private TextToSpeech textToSpeech;
     private SharedPreferences sharedPref;
-    private Gson gson;
     private String location;
     private final ServiceConnection service_connection = new ServiceConnection() {
         @Override
@@ -84,9 +81,7 @@ public class PeripheralControlActivity extends Activity {
         @Override
         public void handleMessage(Message msg) {
             Bundle bundle;
-            String service_uuid = "";
-            String characteristic_uuid = "";
-            byte[] b = null;
+            byte[] b;
 
             switch (msg.what) {
                 case BleAdapterService.MESSAGE:
@@ -119,30 +114,27 @@ public class PeripheralControlActivity extends Activity {
                 case BleAdapterService.GATT_SERVICES_DISCOVERED:
 
                     // validate services and if ok....
-                    List<BluetoothGattService> slist = bluetooth_le_adapter.getSupportedGattServices();
-                    boolean custom_service_one = false;
-                    boolean custom_service_two = false;
+                    List<BluetoothGattService> sList = bluetooth_le_adapter.getSupportedGattServices();
+                    boolean led_brightness_service = false;
 
-                    for (BluetoothGattService svc : slist) {
+                    for (BluetoothGattService svc : sList) {
                         Log.d(ButtonPage.TAG,
                                 "UUID=" + svc.getUuid().toString().toUpperCase() + " INSTANCE=" + svc.getInstanceId());
-                        if (svc.getUuid().toString().equalsIgnoreCase(BleAdapterService.CUSTOM_SERVICE_ONE)) {
-                            custom_service_one = true;
+                        if (svc.getUuid().toString().equalsIgnoreCase(BleAdapterService.LED_BRIGHTNESS_SERVICE)) {
+                            led_brightness_service = true;
                         }
-                        if (svc.getUuid().toString().equalsIgnoreCase(BleAdapterService.CUSTOM_SERVICE_TWO)) {
-                            custom_service_two = true;
-                        }
+
                     }
 
-                    if (custom_service_one && custom_service_two) {
+                    if (led_brightness_service) {
                         showMsg("Device has expected services");
                         startReadRssiTimer();
                         // show the rssi distance colored rectangle
                         PeripheralControlActivity.this.findViewById(R.id.rectangle)
                                 .setVisibility(View.VISIBLE);
 
-                        bluetooth_le_adapter.readCharacteristic(BleAdapterService.CUSTOM_SERVICE_ONE,
-                                BleAdapterService.CUSTOM_SERVICE_ONE_CHARACTERISTIC);
+                        bluetooth_le_adapter.readCharacteristic(BleAdapterService.LED_BRIGHTNESS_SERVICE,
+                                BleAdapterService.LED_BRIGHTNESS_CHARACTERISTIC);
 
                     } else {
                         showMsg("Device does not have expected GATT services");
@@ -159,13 +151,13 @@ public class PeripheralControlActivity extends Activity {
                 case BleAdapterService.GATT_CHARACTERISTIC_READ:
                     bundle = msg.getData();
                     Log.d(ButtonPage.TAG,
-                            "Service=" + bundle.get(BleAdapterService.PARCEL_SERVICE_UUID).toString().toUpperCase()
+                            "Service=" + Objects.requireNonNull(bundle.get(BleAdapterService.PARCEL_SERVICE_UUID)).toString().toUpperCase()
                                     + " Characteristic="
-                                    + bundle.get(BleAdapterService.PARCEL_CHARACTERISTIC_UUID).toString().toUpperCase());
-                    if (bundle.get(BleAdapterService.PARCEL_CHARACTERISTIC_UUID).toString().toUpperCase()
-                            .equals(BleAdapterService.CUSTOM_SERVICE_ONE_CHARACTERISTIC)
-                            && bundle.get(BleAdapterService.PARCEL_SERVICE_UUID).toString().toUpperCase()
-                            .equals(BleAdapterService.CUSTOM_SERVICE_ONE)) {
+                                    + Objects.requireNonNull(bundle.get(BleAdapterService.PARCEL_CHARACTERISTIC_UUID)).toString().toUpperCase());
+                    if (Objects.requireNonNull(bundle.get(BleAdapterService.PARCEL_CHARACTERISTIC_UUID)).toString().toUpperCase()
+                            .equals(BleAdapterService.LED_BRIGHTNESS_CHARACTERISTIC)
+                            && Objects.requireNonNull(bundle.get(BleAdapterService.PARCEL_SERVICE_UUID)).toString().toUpperCase()
+                            .equals(BleAdapterService.LED_BRIGHTNESS_SERVICE)) {
                         b = bundle.getByteArray(BleAdapterService.PARCEL_VALUE);
                         assert b != null;
                         if (b.length > 0) {
@@ -182,15 +174,18 @@ public class PeripheralControlActivity extends Activity {
                 case BleAdapterService.GATT_CHARACTERISTIC_WRITTEN:
                     bundle = msg.getData();
                     Log.d(ButtonPage.TAG,
-                            "Service=" + bundle.get(BleAdapterService.PARCEL_SERVICE_UUID).toString().toUpperCase()
+                            "Service=" + Objects.requireNonNull(bundle.get(BleAdapterService.PARCEL_SERVICE_UUID)).toString().toUpperCase()
                                     + " Characteristic="
-                                    + bundle.get(BleAdapterService.PARCEL_CHARACTERISTIC_UUID).toString().toUpperCase());
-                    if (bundle.get(BleAdapterService.PARCEL_CHARACTERISTIC_UUID).toString().toUpperCase()
-                            .equals(BleAdapterService.CUSTOM_SERVICE_ONE_CHARACTERISTIC)
-                            && bundle.get(BleAdapterService.PARCEL_SERVICE_UUID).toString().toUpperCase()
-                            .equals(BleAdapterService.CUSTOM_SERVICE_ONE)) {
+                                    + Objects.requireNonNull(bundle.get(BleAdapterService.PARCEL_CHARACTERISTIC_UUID)).toString().toUpperCase());
+                    if (Objects.requireNonNull(bundle.get(BleAdapterService.PARCEL_CHARACTERISTIC_UUID)).toString().toUpperCase()
+                            .equals(BleAdapterService.LED_BRIGHTNESS_CHARACTERISTIC)
+                            && Objects.requireNonNull(bundle.get(BleAdapterService.PARCEL_SERVICE_UUID)).toString().toUpperCase()
+                            .equals(BleAdapterService.LED_BRIGHTNESS_SERVICE)) {
                         b = bundle.getByteArray(BleAdapterService.PARCEL_VALUE);
-                        Log.d(ButtonPage.TAG, "b.length if entered (GATT_CHARACTERISTIC_WRITTEN) b[0]: " + b[0]);
+                        if (b != null && b.length > 0) {
+                            PeripheralControlActivity.this.setLedBrightness((int) b[0]);
+                            Log.d(ButtonPage.TAG, "b.length if entered (GATT_CHARACTERISTIC_WRITTEN) b[0]: " + b[0]);
+                        }
                     }
                     break;
 
@@ -202,7 +197,9 @@ public class PeripheralControlActivity extends Activity {
         View view = this.getCurrentFocus();
         if (view != null) {
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+            if (imm != null) {
+                imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+            }
         }
     }
 
@@ -214,7 +211,7 @@ public class PeripheralControlActivity extends Activity {
         PreferenceManager.setDefaultValues(this, R.xml.root_preferences, false);
         String nameAddress;
         beepHandler = new Handler();
-        timeDelay = new Handler();
+        Handler timeDelay = new Handler();
         lowButton = findViewById(R.id.lowButton);
         midButton = findViewById(R.id.midButton);
         highButton = findViewById(R.id.highButton);
@@ -223,7 +220,7 @@ public class PeripheralControlActivity extends Activity {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 
-                if (passwordText.getText().toString().equals("6875")) {
+                if (passwordText.getText().toString().equals("9318")) {
                     closeKeyboard();
                     lowButton.setVisibility(View.VISIBLE);
                     lowButton.setEnabled(true);
@@ -232,15 +229,15 @@ public class PeripheralControlActivity extends Activity {
                     highButton.setVisibility(View.VISIBLE);
                     highButton.setEnabled(true);
                     passwordText.setVisibility(View.INVISIBLE);
-                    simpleToast("PIN correct", 2000);
+                    simpleToast("PIN correct");
                 } else if (passwordText.getText().toString().isEmpty()) {
                     passwordText.setText(null);
                     closeKeyboard();
-                    simpleToast("PIN empty", 2000);
+                    simpleToast("PIN empty");
                 } else {
                     passwordText.setText(null);
                     closeKeyboard();
-                    simpleToast("Wrong pin", 2000);
+                    simpleToast("Wrong pin");
                 }
 
                 return true;
@@ -290,7 +287,7 @@ public class PeripheralControlActivity extends Activity {
         Intent gattServiceIntent = new Intent(this, BleAdapterService.class);
         bindService(gattServiceIntent, service_connection, BIND_AUTO_CREATE);
 
-
+        //resetVersion();
         showMsg("Ready");
         timeDelay.postDelayed(new Runnable() {
             @Override
@@ -301,6 +298,25 @@ public class PeripheralControlActivity extends Activity {
 
     }
 
+    private void setLedBrightness(int led_brightness) {
+        this.led_brightness = led_brightness;
+        lowButton.setTextColor(Color.BLACK);
+        midButton.setTextColor(Color.BLACK);
+        highButton.setTextColor(Color.BLACK);
+        switch (led_brightness) {
+            case 0:
+                lowButton.setTextColor(Color.RED);
+                break;
+            case 1:
+                midButton.setTextColor(Color.RED);
+                break;
+            case 2:
+                highButton.setTextColor(Color.RED);
+                break;
+        }
+    }
+
+    //helper method to reset version programmatically, used for testing
     public void resetVersion() {
         SharedPreferences.Editor editor = sharedPref.edit();
         editor.putInt("version", 0);
@@ -313,6 +329,7 @@ public class PeripheralControlActivity extends Activity {
             try {
                 bluetooth_le_adapter.disconnect();
             } catch (Exception e) {
+                Log.d(ButtonPage.TAG, "error on going back");
             }
         } else {
             finish();
@@ -320,7 +337,7 @@ public class PeripheralControlActivity extends Activity {
     }
 
 
-    Runnable mBeeper = new Runnable() {
+    private Runnable mBeeper = new Runnable() {
         @Override
         public void run() {
             try {
@@ -333,20 +350,21 @@ public class PeripheralControlActivity extends Activity {
         }
     };
 
-    void getLocation() {
+    private void getLocation() {
         String locations = sharedPref.getString("locations", "no locations");
-        gson = new Gson();
+        Gson gson = new Gson();
         ButtonList newButtonList = new ButtonList();
         newButtonList.setButtonList(new ArrayList<ButtonEntity>());
         newButtonList = gson.fromJson(locations, ButtonList.class);
         List<ButtonEntity> newBList = newButtonList.getButtonList();
         location = newBList.get(device_id).getLocation();
     }
-    void startBeep() {
+
+    private void startBeep() {
         mBeeper.run();
     }
 
-    void stopBeep() {
+    private void stopBeep() {
         beepHandler.removeCallbacks(mBeeper);
     }
 
@@ -355,7 +373,7 @@ public class PeripheralControlActivity extends Activity {
 
     }
 
-    public void readDeviceName() {
+    private void readDeviceName() {
         updateVoice();
         if (device_name != null) {
             String ttsString = "you are on " + location;
@@ -383,7 +401,7 @@ public class PeripheralControlActivity extends Activity {
         });
     }
 
-    public void connectToButton() {
+    private void connectToButton() {
         showMsg("Connecting...");
         if (bluetooth_le_adapter != null) {
             if (bluetooth_le_adapter.connect(device_address)) {
@@ -398,9 +416,7 @@ public class PeripheralControlActivity extends Activity {
         }
     }
 
-    public void onConnect(View view) {
-        connectToButton();
-    }
+
 
     private void startReadRssiTimer() {
         mTimer = new Timer();
@@ -428,7 +444,7 @@ public class PeripheralControlActivity extends Activity {
         }
     }
 
-    public double calculateDistance(int rssi) {
+    private double calculateDistance(int rssi) {
         int txPower = -59; //hard coded power value. Usually ranges between -59 to -65
 
         if (rssi == 0) {
@@ -445,7 +461,6 @@ public class PeripheralControlActivity extends Activity {
     }
 
     private void updateRssi(int rssi) {
-        //((TextView) findViewById(R.id.rssiTextView)).setText("RSSI = " + Integer.toString(rssi));
         distance = calculateDistance(rssi);
         String distanceRssi = "distance = " + truncateDecimal(distance) + "m rssi: " + rssi;
         ((TextView) findViewById(R.id.rssiTextView)).setText(distanceRssi);
@@ -463,32 +478,15 @@ public class PeripheralControlActivity extends Activity {
             mInterval = 50;
         }
 
-        byte proximity_band = 3;
         if (rssi < -80) {
             layout.setBackgroundColor(0xFFFF0000);
         } else if (rssi < -60) {
             layout.setBackgroundColor(0xFFFF8A01);
-            proximity_band = 2;
         } else {
             layout.setBackgroundColor(0xFF00FF00);
-            proximity_band = 1;
         }
         layout.invalidate();
 
-    }
-
-    public String byteArrayAsHexString(byte[] bytes) {
-        if (bytes == null) {
-            return "";
-        }
-        int l = bytes.length;
-        StringBuffer hex = new StringBuffer();
-        for (int i = 0; i < l; i++) {
-            if ((bytes[i] >= 0) & (bytes[i] < 16))
-                hex.append("0");
-            hex.append(Integer.toString(bytes[i] & 0xff, 16).toUpperCase());
-        }
-        return hex.toString();
     }
 
     @Override
@@ -504,16 +502,16 @@ public class PeripheralControlActivity extends Activity {
         bluetooth_le_adapter = null;
     }
 
-    public void updateVoice() {
+    private void updateVoice() {
         int voiceSpeed;
-        Float voiceSpeedFloat;
-        voiceName = sharedPref.getString(SettingsActivity.KEY_PREF_VOICE, "gbf1");
+        float voiceSpeedFloat;
+        String voiceName = sharedPref.getString(SettingsActivity.KEY_PREF_VOICE, "gbf1");
         voiceSpeed = sharedPref.getInt(SettingsActivity.KEY_PREF_SPEED, 10);
         voiceSpeedFloat = (float) (voiceSpeed * 0.1);
         textToSpeech.setSpeechRate(voiceSpeedFloat);
         switch (voiceName) {
             case "gbf1":
-                voice = new Voice("en-gb-x-fis#female_1-local", Locale.getDefault(), 1, 1, false, null);
+                Voice voice = new Voice("en-gb-x-fis#female_1-local", Locale.getDefault(), 1, 1, false, null);
                 textToSpeech.setVoice(voice);
                 break;
             case "gbf2":
@@ -568,16 +566,31 @@ public class PeripheralControlActivity extends Activity {
                     }
                     Log.i("TTS", "Initialization success.");
                 } else {
-                    Toast.makeText(getApplicationContext(), "TTS Initialization failed!", Toast.LENGTH_SHORT).show();
+                    simpleToast("TTS Initialization failed!");
                 }
             }
         });
     }
 
-    private void simpleToast(String message, int duration) {
-        toast = Toast.makeText(this, message, duration);
+    private void simpleToast(String message) {
+        Toast toast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
         toast.setGravity(Gravity.CENTER, 0, 0);
         toast.show();
+    }
+
+    public void onLow(View view) {
+        bluetooth_le_adapter.writeCharacteristic(BleAdapterService.LED_BRIGHTNESS_SERVICE,
+                BleAdapterService.LED_BRIGHTNESS_CHARACTERISTIC, BleAdapterService.LED_BRIGHTNESS_LOW);
+    }
+
+    public void onMid(View view) {
+        bluetooth_le_adapter.writeCharacteristic(BleAdapterService.LED_BRIGHTNESS_SERVICE,
+                BleAdapterService.LED_BRIGHTNESS_CHARACTERISTIC, BleAdapterService.LED_BRIGHTNESS_MID);
+    }
+
+    public void onHigh(View view) {
+        bluetooth_le_adapter.writeCharacteristic(BleAdapterService.LED_BRIGHTNESS_SERVICE,
+                BleAdapterService.LED_BRIGHTNESS_CHARACTERISTIC, BleAdapterService.LED_BRIGHTNESS_HIGH);
     }
 
 }

@@ -4,7 +4,6 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
-import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
@@ -12,25 +11,23 @@ import android.content.Intent;
 import android.os.Handler;
 import android.util.Log;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Objects;
 
 import mateusz.holtyn.pedestrianbuttons.ui.ButtonPage;
 
 public class BleScanner {
     private BluetoothLeScanner scanner = null;
-    private BluetoothAdapter bluetooth_adapter = null;
+    private BluetoothAdapter bluetooth_adapter;
     private Handler handler = new Handler();
     private ScanResultsConsumer scan_results_consumer;
-    private Context context;
     private boolean scanning = false;
-    private String device_name_start = "";
 
     public BleScanner(Context context) {
-        this.context = context;
         final BluetoothManager bluetoothManager = (BluetoothManager)
                 context.getSystemService(Context.BLUETOOTH_SERVICE);
-        bluetooth_adapter = bluetoothManager.getAdapter();
+        if (bluetoothManager != null) {
+            bluetooth_adapter = bluetoothManager.getAdapter();
+        }
 // check bluetooth is available and on
         if (bluetooth_adapter == null || !bluetooth_adapter.isEnabled()) {
             Log.d(ButtonPage.TAG, "Bluetooth is NOT switched on");
@@ -63,10 +60,6 @@ public class BleScanner {
         }, stop_after_ms);
 
         this.scan_results_consumer = scan_results_consumer;
-//        List<ScanFilter> filters;
-//        filters = new ArrayList<ScanFilter>();
-//        //ScanFilter filter = new ScanFilter.Builder().setDeviceName("KSK0001").build();
-//        // filters.add(filter);
         ScanSettings settings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
         setScanning(true);
         scanner.startScan(null, settings, scan_callback);
@@ -83,7 +76,7 @@ public class BleScanner {
             if (!scanning) {
                 return;
             }
-            scan_results_consumer.candidateBleDevice(result.getDevice(), result.getScanRecord().getBytes(), result.getRssi());
+            scan_results_consumer.candidateBleDevice(result.getDevice(), Objects.requireNonNull(result.getScanRecord()).getBytes(), result.getRssi());
             Log.d(ButtonPage.TAG, "scan callback device added, rssi: " + result.getRssi());
         }
     };
@@ -92,7 +85,7 @@ public class BleScanner {
         return scanning;
     }
 
-    void setScanning(boolean scanning) {
+    private void setScanning(boolean scanning) {
         this.scanning = scanning;
         if (!scanning) {
             scan_results_consumer.scanningStopped();
@@ -100,5 +93,4 @@ public class BleScanner {
             scan_results_consumer.scanningStarted();
         }
     }
-// end of class
 }
