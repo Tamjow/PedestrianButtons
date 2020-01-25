@@ -2,6 +2,7 @@ package mateusz.holtyn.pedestrianbuttons.ui;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -55,10 +56,10 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_button_page);
         setButtonText();
+        ble_scanner = new BleScanner(this.getApplicationContext());
         ble_device_list_adapter = new ListAdapter();
         ListView listView = this.findViewById(R.id.deviceList);
         listView.setAdapter(ble_device_list_adapter);
-        ble_scanner = new BleScanner(this.getApplicationContext());
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view,
@@ -254,6 +255,7 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
     }
 
     public void onScanNoArg() {
+
         if (!ble_scanner.isScanning()) {
             Log.d(TAG, "Not currently scanning");
             if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)

@@ -2,8 +2,10 @@ package mateusz.holtyn.pedestrianbuttons.ui;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
@@ -16,7 +18,7 @@ public class MainActivity extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        BluetoothAdapter bluetooth_adapter = BluetoothAdapter.getDefaultAdapter();
         Button listButton = findViewById(R.id.button1);
         listButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -31,6 +33,13 @@ public class MainActivity extends AppCompatActivity {
                 openSettings();
             }
         });
+
+        if (bluetooth_adapter == null || !bluetooth_adapter.isEnabled()) {
+            Log.d(ButtonPage.TAG, "Bluetooth is NOT switched on");
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            enableBtIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(enableBtIntent);
+        }
 
     }
 
