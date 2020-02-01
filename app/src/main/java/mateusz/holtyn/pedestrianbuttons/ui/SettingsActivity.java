@@ -44,7 +44,7 @@ public class SettingsActivity extends AppCompatActivity {
                 .beginTransaction()
                 .replace(R.id.settings, new SettingsFragment())
                 .commit();
-        setTheme(R.style.CustomPreferenceTheme);
+        //setTheme(R.style.CustomPreferenceTheme);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
@@ -85,6 +85,7 @@ public class SettingsActivity extends AppCompatActivity {
             updateButton.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
+                    updateButton.setSummary("Checking for updates");
                     onGetJson();
                     return true;
                 }
@@ -165,9 +166,10 @@ public class SettingsActivity extends AppCompatActivity {
                         uiUpdater.sendMessage(message); // Send message to main thread Handler to process.
                     } catch (IOException ex) {
                         Log.e(TAG_HTTP_URL_CONNECTION, ex.getMessage(), ex);
-                        Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
+                        getActivity().runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
+                                updateButton.setSummary("Can't connect, database potentially down");
                                 Toast.makeText(getContext(), "Can't connect, database potentially down", Toast.LENGTH_SHORT).show();
                             }
                         });
@@ -185,9 +187,10 @@ public class SettingsActivity extends AppCompatActivity {
                             }
                         } catch (IOException ex) {
                             Log.e(TAG_HTTP_URL_CONNECTION, ex.getMessage(), ex);
-                            Objects.requireNonNull(getActivity()).runOnUiThread(new Runnable() {
+                            getActivity().runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
+                                    updateButton.setSummary("Can't connect, database potentially down");
                                     Toast.makeText(getContext(), "Can't connect, database potentially down", Toast.LENGTH_SHORT).show();
                                 }
                             });

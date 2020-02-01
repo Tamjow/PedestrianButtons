@@ -17,6 +17,7 @@
         <item name="android:textColorPrimary">#000000</item>
         <item name="android:textColorSecondary">#494949</item>
         <item name="android:textSize">22sp</item>
+        <item name="textColorAlertDialogListItem">#000000</item>
     </style>
 
 </resources>
