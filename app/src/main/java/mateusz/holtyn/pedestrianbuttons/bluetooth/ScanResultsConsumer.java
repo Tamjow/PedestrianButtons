@@ -4,7 +4,7 @@ import android.bluetooth.BluetoothDevice;
 
 public interface ScanResultsConsumer {
 
-    void candidateBleDevice(BluetoothDevice device, byte[] scan_record, int rssi);
+    void candidateBleDevice(BluetoothDevice device, byte[] scanRecord, int rssi);
 
     void scanningStarted();
 

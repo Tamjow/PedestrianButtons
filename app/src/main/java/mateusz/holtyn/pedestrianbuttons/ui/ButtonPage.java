@@ -2,7 +2,6 @@ package mateusz.holtyn.pedestrianbuttons.ui;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -34,12 +33,12 @@ import mateusz.holtyn.pedestrianbuttons.bluetooth.ScanResultsConsumer;
 
 public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer {
 
-    private boolean ble_scanning = false;
-    private ListAdapter ble_device_list_adapter;
-    private BleScanner ble_scanner;
+    private boolean bleScanning = false;
+    private ListAdapter bleDeviceListAdapter;
+    private BleScanner bleScanner;
     private static final long SCAN_TIMEOUT = 5000;
     private static final int REQUEST_LOCATION = 0;
-    private boolean permissions_granted = false;
+    private boolean permissionsGranted = false;
     private Toast toast;
     static class ViewHolder {
         TextView text;
@@ -56,19 +55,19 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_button_page);
         setButtonText();
-        ble_scanner = new BleScanner(this.getApplicationContext());
-        ble_device_list_adapter = new ListAdapter();
+        bleScanner = new BleScanner(this.getApplicationContext());
+        bleDeviceListAdapter = new ListAdapter();
         ListView listView = this.findViewById(R.id.deviceList);
-        listView.setAdapter(ble_device_list_adapter);
+        listView.setAdapter(bleDeviceListAdapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view,
                                     int position, long id) {
-                if (ble_scanning) {
+                if (bleScanning) {
                     setScanState(false);
-                    ble_scanner.stopScanning();
+                    bleScanner.stopScanning();
                 }
-                BluetoothDevice device = ble_device_list_adapter.getDevice(position);
+                BluetoothDevice device = bleDeviceListAdapter.getDevice(position);
                 if (toast != null) {
                     toast.cancel();
                 }
@@ -95,7 +94,7 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
     }
 
     private void setScanState(boolean value) {
-        ble_scanning = value;
+        bleScanning = value;
         Log.d(TAG, "Setting scan state to " + value);
         ((Button) this.findViewById(R.id.scanButton)).setText(value ? STOP_SCANNING : FIND);
     }
@@ -139,15 +138,15 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
     }
 
     @Override
-    public void candidateBleDevice(final BluetoothDevice device, byte[] scan_record, final int rssi) {
+    public void candidateBleDevice(final BluetoothDevice device, byte[] scanRecord, final int rssi) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
 
                 if (device.getName() != null && device.getName().contains("KSK") && rssi > -70) {
-                    ble_device_list_adapter.addDevice(device, rssi);
+                    bleDeviceListAdapter.addDevice(device, rssi);
                     Log.d(TAG, "candidate ble device being added, rssi: " + rssi + " addr: " + device.getAddress());
-                    ble_device_list_adapter.notifyDataSetChanged();
+                    bleDeviceListAdapter.notifyDataSetChanged();
 
                 }
             }
@@ -155,41 +154,41 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
     }
 
     private class ListAdapter extends BaseAdapter {
-        private ArrayList<BluetoothDevice> ble_devices;
-        private ArrayList<Integer> rssi_values;
+        private ArrayList<BluetoothDevice> bleDevices;
+        private ArrayList<Integer> rssiValues;
 
         ListAdapter() {
             super();
-            ble_devices = new ArrayList<>();
-            rssi_values = new ArrayList<>();
+            bleDevices = new ArrayList<>();
+            rssiValues = new ArrayList<>();
         }
 
         void addDevice(BluetoothDevice device, Integer rssiValue) {
-            if (!ble_devices.contains(device)) {
+            if (!bleDevices.contains(device)) {
                 Log.d("addDevice", "rssiValue: " + rssiValue + " device name: " + device.getName());
-                ble_devices.add(device);
-                rssi_values.add(rssiValue);
+                bleDevices.add(device);
+                rssiValues.add(rssiValue);
             }
         }
 
 
         BluetoothDevice getDevice(int position) {
-            return ble_devices.get(position);
+            return bleDevices.get(position);
         }
 
         void clear() {
-            ble_devices.clear();
-            rssi_values.clear();
+            bleDevices.clear();
+            rssiValues.clear();
         }
 
         @Override
         public int getCount() {
-            return ble_devices.size();
+            return bleDevices.size();
         }
 
         @Override
         public Object getItem(int i) {
-            return ble_devices.get(i);
+            return bleDevices.get(i);
         }
 
         @Override
@@ -211,10 +210,10 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
             } else {
                 viewHolder = (ViewHolder) view.getTag();
             }
-            BluetoothDevice device = ble_devices.get(i);
-            Integer rssi_val = rssi_values.get(i);
+            BluetoothDevice device = bleDevices.get(i);
+            Integer rssiVal = rssiValues.get(i);
             String deviceName = device.getName();
-            double distance = calculateDistance(rssi_val);
+            double distance = calculateDistance(rssiVal);
             if (deviceName != null && deviceName.length() > 0) {
                 viewHolder.text.setText(deviceName);
             } else {
@@ -236,41 +235,41 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
     }
 
     public void onScan(View view) {
-        if (!ble_scanner.isScanning()) {
+        if (!bleScanner.isScanning()) {
             Log.d(TAG, "Not currently scanning");
             if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
                     != PackageManager.PERMISSION_GRANTED) {
-                permissions_granted = false;
+                permissionsGranted = false;
                 requestLocationPermission();
             } else {
                 Log.i(TAG, "Location permission has already been granted. Starting scanning.");
-                permissions_granted = true;
+                permissionsGranted = true;
             }
 
             startScanning();
         } else {
             Log.d(TAG, "Already scanning");
-            ble_scanner.stopScanning();
+            bleScanner.stopScanning();
         }
     }
 
     public void onScanNoArg() {
 
-        if (!ble_scanner.isScanning()) {
+        if (!bleScanner.isScanning()) {
             Log.d(TAG, "Not currently scanning");
             if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
                     != PackageManager.PERMISSION_GRANTED) {
-                permissions_granted = false;
+                permissionsGranted = false;
                 requestLocationPermission();
             } else {
                 Log.i(TAG, "Location permission has already been granted. Starting scanning.");
-                permissions_granted = true;
+                permissionsGranted = true;
             }
 
             startScanning();
         } else {
             Log.d(TAG, "Already scanning");
-            ble_scanner.stopScanning();
+            bleScanner.stopScanning();
         }
     }
 
@@ -302,8 +301,8 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
             if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Location permission has been granted
                 Log.i(TAG, "Location permission has now been granted. Scanning.....");
-                permissions_granted = true;
-                if (ble_scanner.isScanning()) {
+                permissionsGranted = true;
+                if (bleScanner.isScanning()) {
                     startScanning();
                 }
             } else {
@@ -321,16 +320,16 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
     }
 
     private void startScanning() {
-        if (permissions_granted) {
+        if (permissionsGranted) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    ble_device_list_adapter.clear();
-                    ble_device_list_adapter.notifyDataSetChanged();
+                    bleDeviceListAdapter.clear();
+                    bleDeviceListAdapter.notifyDataSetChanged();
                 }
             });
             simpleToast(SCANNING);
-            ble_scanner.startScanning(this, SCAN_TIMEOUT);
+            bleScanner.startScanning(this, SCAN_TIMEOUT);
         } else {
             Log.i(TAG, "Permission to perform Bluetooth scanning was not yet granted");
         }

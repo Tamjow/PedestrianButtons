@@ -60,7 +60,7 @@
             app:iconSpaceReserved="false"
             android:title="Check for database update"
             android:key="checkUpdateButton"
-            android:summary="If an update is found, it will be applied automatically" />
+            android:summary="If an update is found it will be applied automatically" />
 
     </PreferenceCategory>
 

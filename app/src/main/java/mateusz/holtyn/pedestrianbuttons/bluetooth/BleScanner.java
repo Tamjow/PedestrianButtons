@@ -17,19 +17,19 @@ import mateusz.holtyn.pedestrianbuttons.ui.ButtonPage;
 
 public class BleScanner {
     private BluetoothLeScanner scanner = null;
-    private BluetoothAdapter bluetooth_adapter;
+    private BluetoothAdapter bluetoothAdapter;
     private Handler handler = new Handler();
-    private ScanResultsConsumer scan_results_consumer;
+    private ScanResultsConsumer scanResultsConsumer;
     private boolean scanning = false;
 
     public BleScanner(Context context) {
         final BluetoothManager bluetoothManager = (BluetoothManager)
                 context.getSystemService(Context.BLUETOOTH_SERVICE);
         if (bluetoothManager != null) {
-            bluetooth_adapter = bluetoothManager.getAdapter();
+            bluetoothAdapter = bluetoothManager.getAdapter();
         }
 // check bluetooth is available and on
-        if (bluetooth_adapter == null || !bluetooth_adapter.isEnabled()) {
+        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
             Log.d(ButtonPage.TAG, "Bluetooth is NOT switched on");
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             enableBtIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -38,14 +38,14 @@ public class BleScanner {
         Log.d(ButtonPage.TAG, "Bluetooth is switched on");
     }
 
-    public void startScanning(final ScanResultsConsumer scan_results_consumer, long stop_after_ms) {
+    public void startScanning(final ScanResultsConsumer scanResultsConsumer, long stopAfterMs) {
         if (scanning) {
             Log.d(ButtonPage.TAG, "Already scanning so ignoring startScanning request");
             return;
         }
         Log.d(ButtonPage.TAG, "Scanning...");
         if (scanner == null) {
-            scanner = bluetooth_adapter.getBluetoothLeScanner();
+            scanner = bluetoothAdapter.getBluetoothLeScanner();
             Log.d(ButtonPage.TAG, "Created BluetoothScanner object");
         }
         handler.postDelayed(new Runnable() {
@@ -53,30 +53,30 @@ public class BleScanner {
             public void run() {
                 if (scanning) {
                     Log.d(ButtonPage.TAG, "Stopping scanning");
-                    scanner.stopScan(scan_callback);
+                    scanner.stopScan(scanCallback);
                     setScanning(false);
                 }
             }
-        }, stop_after_ms);
+        }, stopAfterMs);
 
-        this.scan_results_consumer = scan_results_consumer;
+        this.scanResultsConsumer = scanResultsConsumer;
         ScanSettings settings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
         setScanning(true);
-        scanner.startScan(null, settings, scan_callback);
+        scanner.startScan(null, settings, scanCallback);
     }
 
     public void stopScanning() {
         setScanning(false);
         Log.d(ButtonPage.TAG, "Stopping scanning");
-        scanner.stopScan(scan_callback);
+        scanner.stopScan(scanCallback);
     }
 
-    private ScanCallback scan_callback = new ScanCallback() {
+    private ScanCallback scanCallback = new ScanCallback() {
         public void onScanResult(int callbackType, final ScanResult result) {
             if (!scanning) {
                 return;
             }
-            scan_results_consumer.candidateBleDevice(result.getDevice(), Objects.requireNonNull(result.getScanRecord()).getBytes(), result.getRssi());
+            scanResultsConsumer.candidateBleDevice(result.getDevice(), Objects.requireNonNull(result.getScanRecord()).getBytes(), result.getRssi());
             Log.d(ButtonPage.TAG, "scan callback device added, rssi: " + result.getRssi());
         }
     };
@@ -88,9 +88,9 @@ public class BleScanner {
     private void setScanning(boolean scanning) {
         this.scanning = scanning;
         if (!scanning) {
-            scan_results_consumer.scanningStopped();
+            scanResultsConsumer.scanningStopped();
         } else {
-            scan_results_consumer.scanningStarted();
+            scanResultsConsumer.scanningStarted();
         }
     }
 }

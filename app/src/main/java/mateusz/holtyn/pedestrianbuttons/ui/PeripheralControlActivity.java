@@ -48,38 +48,38 @@ public class PeripheralControlActivity extends Activity {
     public static final String EXTRA_NAME = "name";
     public static final String EXTRA_ID = "id";
     private static final String PINCODE = "9318";
-    private String device_name;
-    private String device_address;
-    private Integer device_id;
+    private String deviceName;
+    private String deviceAddress;
+    private Integer deviceId;
     private double distance;
     private Timer mTimer;
     private Handler beepHandler;
     private MediaPlayer mp;
     private Button lowButton, midButton, highButton;
     private EditText passwordText;
-    private int led_brightness;
+    private int ledBrightness;
     private int mInterval = 100;
-    private boolean back_requested = false;
-    private BleAdapterService bluetooth_le_adapter;
+    private boolean backRequested = false;
+    private BleAdapterService bluetoothLeAdapter;
     private TextToSpeech textToSpeech;
     private SharedPreferences sharedPref;
     private String location;
     private boolean isBeeping = false;
-    private final ServiceConnection service_connection = new ServiceConnection() {
+    private final ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
-            bluetooth_le_adapter = ((BleAdapterService.LocalBinder) service).getService();
-            bluetooth_le_adapter.setActivityHandler(message_handler);
+            bluetoothLeAdapter = ((BleAdapterService.LocalBinder) service).getService();
+            bluetoothLeAdapter.setActivityHandler(messageHandler);
         }
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
-            bluetooth_le_adapter = null;
+            bluetoothLeAdapter = null;
         }
     };
 
     @SuppressLint("HandlerLeak")
-    private Handler message_handler = new Handler() {
+    private Handler messageHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             Bundle bundle;
@@ -95,19 +95,19 @@ public class PeripheralControlActivity extends Activity {
                     PeripheralControlActivity.this.findViewById(R.id.startBeepingButton).setEnabled(true);
                     // we're connected
                     showMsg("CONNECTED");
-                    bluetooth_le_adapter.discoverServices();
+                    if (bluetoothLeAdapter != null) {
+                        bluetoothLeAdapter.discoverServices();
+                    }
                     break;
 
                 case BleAdapterService.GATT_DISCONNECT:
                     // we're disconnected
                     showMsg("DISCONNECTED");
-                    // hide the rssi distance colored rectangle
-
                     PeripheralControlActivity.this.findViewById(R.id.startBeepingButton).setEnabled(false);
                     // stop the rssi reading timer
                     stopTimer();
 
-                    if (back_requested) {
+                    if (backRequested) {
                         PeripheralControlActivity.this.finish();
                     }
                     break;
@@ -115,24 +115,24 @@ public class PeripheralControlActivity extends Activity {
                 case BleAdapterService.GATT_SERVICES_DISCOVERED:
 
                     // validate services and if ok....
-                    List<BluetoothGattService> sList = bluetooth_le_adapter.getSupportedGattServices();
-                    boolean led_brightness_service = false;
+                    List<BluetoothGattService> sList = bluetoothLeAdapter.getSupportedGattServices();
+                    boolean ledBrightnessService = false;
 
                     for (BluetoothGattService svc : sList) {
                         Log.d(ButtonPage.TAG,
                                 "UUID=" + svc.getUuid().toString().toUpperCase() + " INSTANCE=" + svc.getInstanceId());
                         if (svc.getUuid().toString().equalsIgnoreCase(BleAdapterService.LED_BRIGHTNESS_SERVICE)) {
-                            led_brightness_service = true;
+                            ledBrightnessService = true;
                         }
 
                     }
 
-                    if (led_brightness_service) {
+                    if (ledBrightnessService) {
                         showMsg("Device has expected services");
                         startReadRssiTimer();
 
 
-                        bluetooth_le_adapter.readCharacteristic(BleAdapterService.LED_BRIGHTNESS_SERVICE,
+                        bluetoothLeAdapter.readCharacteristic(BleAdapterService.LED_BRIGHTNESS_SERVICE,
                                 BleAdapterService.LED_BRIGHTNESS_CHARACTERISTIC);
 
                     } else {
@@ -161,7 +161,6 @@ public class PeripheralControlActivity extends Activity {
                         assert b != null;
                         if (b.length > 0) {
                             Log.d(ButtonPage.TAG, "b.length if entered (GATT_CHARACTERISTIC_READ) b[0]: " + b[0]);
-                            // show the rssi distance colored rectangle
                             PeripheralControlActivity.this.findViewById(R.id.rectangle)
                                     .setVisibility(View.VISIBLE);
 
@@ -244,8 +243,8 @@ public class PeripheralControlActivity extends Activity {
         });
         // read intent data
         final Intent intent = getIntent();
-        device_name = intent.getStringExtra(EXTRA_NAME);
-        device_address = intent.getStringExtra(EXTRA_ID);
+        deviceName = intent.getStringExtra(EXTRA_NAME);
+        deviceAddress = intent.getStringExtra(EXTRA_ID);
         // get device id from name
         getId();
         //get button's location based on id
@@ -253,7 +252,7 @@ public class PeripheralControlActivity extends Activity {
         //initialize tts
         initTTS();
         // show the device name
-        nameAddress = "DEVICE NAME: " + device_name;
+        nameAddress = "DEVICE NAME: " + deviceName;
 
         ((TextView) this.findViewById(R.id.nameTextView))
                 .setText(nameAddress);
@@ -278,7 +277,7 @@ public class PeripheralControlActivity extends Activity {
 
         // connect to the Bluetooth adapter service
         Intent gattServiceIntent = new Intent(this, BleAdapterService.class);
-        bindService(gattServiceIntent, service_connection, BIND_AUTO_CREATE);
+        bindService(gattServiceIntent, serviceConnection, BIND_AUTO_CREATE);
 
         //resetVersion();
         showMsg("Ready");
@@ -291,12 +290,12 @@ public class PeripheralControlActivity extends Activity {
 
     }
 
-    private void setLedBrightness(int led_brightness) {
-        this.led_brightness = led_brightness;
+    private void setLedBrightness(int ledBrightness) {
+        this.ledBrightness = ledBrightness;
         lowButton.setTextColor(Color.BLACK);
         midButton.setTextColor(Color.BLACK);
         highButton.setTextColor(Color.BLACK);
-        switch (led_brightness) {
+        switch (ledBrightness) {
             case 0:
                 lowButton.setTextColor(Color.RED);
                 break;
@@ -318,10 +317,10 @@ public class PeripheralControlActivity extends Activity {
 
     public void onBackPressed() {
         Log.d(ButtonPage.TAG, "onBackPressed");
-        back_requested = true;
-        if (bluetooth_le_adapter.isConnected()) {
+        backRequested = true;
+        if (bluetoothLeAdapter.isConnected()) {
             try {
-                bluetooth_le_adapter.disconnect();
+                bluetoothLeAdapter.disconnect();
             } catch (Exception e) {
                 Log.d(ButtonPage.TAG, "error on going back");
             }
@@ -337,8 +336,6 @@ public class PeripheralControlActivity extends Activity {
             try {
                 mp.start(); //this function can change value of mInterval.
             } finally {
-                // 100% guarantee that this always happens, even if
-                // the update method throws an exception
                 beepHandler.postDelayed(mBeeper, mInterval);
             }
         }
@@ -351,7 +348,7 @@ public class PeripheralControlActivity extends Activity {
         newButtonList.setButtonList(new ArrayList<ButtonEntity>());
         newButtonList = gson.fromJson(locations, ButtonList.class);
         List<ButtonEntity> newBList = newButtonList.getButtonList();
-        location = newBList.get(device_id).getLocation();
+        location = newBList.get(deviceId).getLocation();
     }
 
     private void startBeep() {
@@ -369,7 +366,7 @@ public class PeripheralControlActivity extends Activity {
 
     private void readDeviceName() {
         updateVoice();
-        if (device_name != null) {
+        if (deviceName != null) {
             String ttsString = "you are on " + location;
             Log.i("TTS", "button clicked: " + ttsString);
             int speechStatus = textToSpeech.speak(ttsString, TextToSpeech.QUEUE_FLUSH, null, "deviceNameTts");
@@ -391,8 +388,8 @@ public class PeripheralControlActivity extends Activity {
 
     private void connectToButton() {
         showMsg("Connecting...");
-        if (bluetooth_le_adapter != null) {
-            if (bluetooth_le_adapter.connect(device_address)) {
+        if (bluetoothLeAdapter != null) {
+            if (bluetoothLeAdapter.connect(deviceAddress)) {
                 if (sharedPref.getBoolean(SettingsActivity.KEY_PREF_AUTOVOICE, true)) {
                     readDeviceName();
                 }
@@ -400,7 +397,7 @@ public class PeripheralControlActivity extends Activity {
                 showMsg("connectToButton: failed to connect");
             }
         } else {
-            showMsg("connectToButton: bluetooth_le_adapter=null");
+            showMsg("connectToButton: bluetoothLeAdapter=null");
         }
     }
 
@@ -410,10 +407,10 @@ public class PeripheralControlActivity extends Activity {
         mTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                bluetooth_le_adapter.readRemoteRssi();
+                bluetoothLeAdapter.readRemoteRssi();
             }
 
-        }, 0, 500);
+        }, 0, 500); //timer that sets how often rssi is read
     }
 
     private void stopTimer() {
@@ -489,8 +486,8 @@ public class PeripheralControlActivity extends Activity {
         }
         stopBeep();
         stopTimer();
-        unbindService(service_connection);
-        bluetooth_le_adapter = null;
+        unbindService(serviceConnection);
+        bluetoothLeAdapter = null;
     }
 
     private void updateVoice() {
@@ -537,9 +534,9 @@ public class PeripheralControlActivity extends Activity {
     }
 
     private void getId() {
-        String idZerosString = device_name.substring(3); //remove KSK from the name to get id with leading zeroes
+        String idZerosString = deviceName.substring(3); //remove KSK from the name to get id with leading zeroes
         idZerosString = idZerosString.replaceFirst("^0+(?!$)", ""); //remove leading zeroes using regex
-        device_id = Integer.parseInt(idZerosString); //convert id string to final integer id
+        deviceId = Integer.parseInt(idZerosString); //convert id string to final integer id
     }
 
     private void initTTS() {
@@ -570,17 +567,17 @@ public class PeripheralControlActivity extends Activity {
     }
 
     public void onLow(View view) {
-        bluetooth_le_adapter.writeCharacteristic(BleAdapterService.LED_BRIGHTNESS_SERVICE,
+        bluetoothLeAdapter.writeCharacteristic(BleAdapterService.LED_BRIGHTNESS_SERVICE,
                 BleAdapterService.LED_BRIGHTNESS_CHARACTERISTIC, BleAdapterService.LED_BRIGHTNESS_LOW);
     }
 
     public void onMid(View view) {
-        bluetooth_le_adapter.writeCharacteristic(BleAdapterService.LED_BRIGHTNESS_SERVICE,
+        bluetoothLeAdapter.writeCharacteristic(BleAdapterService.LED_BRIGHTNESS_SERVICE,
                 BleAdapterService.LED_BRIGHTNESS_CHARACTERISTIC, BleAdapterService.LED_BRIGHTNESS_MID);
     }
 
     public void onHigh(View view) {
-        bluetooth_le_adapter.writeCharacteristic(BleAdapterService.LED_BRIGHTNESS_SERVICE,
+        bluetoothLeAdapter.writeCharacteristic(BleAdapterService.LED_BRIGHTNESS_SERVICE,
                 BleAdapterService.LED_BRIGHTNESS_CHARACTERISTIC, BleAdapterService.LED_BRIGHTNESS_HIGH);
     }
 
