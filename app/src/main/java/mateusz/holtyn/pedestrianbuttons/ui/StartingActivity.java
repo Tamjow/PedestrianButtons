@@ -11,7 +11,7 @@ import android.widget.Button;
 
 import mateusz.holtyn.pedestrianbuttons.R;
 
-public class MainActivity extends AppCompatActivity {
+public class StartingActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,7 +23,7 @@ public class MainActivity extends AppCompatActivity {
         listButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                openButtonPage();
+                openButtonList();
             }
         });
         Button settingsButton = findViewById(R.id.button2);
@@ -35,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         if (bluetooth_adapter == null || !bluetooth_adapter.isEnabled()) {
-            Log.d(ButtonPage.TAG, "Bluetooth is NOT switched on");
+            Log.d(ButtonListActivity.TAG, "Bluetooth is NOT switched on");
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             enableBtIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(enableBtIntent);
@@ -43,8 +43,8 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void openButtonPage() {
-        Intent intent = new Intent(this, ButtonPage.class);
+    private void openButtonList() {
+        Intent intent = new Intent(this, ButtonListActivity.class);
         startActivity(intent);
     }
 

@@ -40,11 +40,11 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import mateusz.holtyn.pedestrianbuttons.R;
-import mateusz.holtyn.pedestrianbuttons.bluetooth.BleAdapterService;
+import mateusz.holtyn.pedestrianbuttons.bluetooth.BleConnectService;
 import mateusz.holtyn.pedestrianbuttons.entity.ButtonEntity;
 import mateusz.holtyn.pedestrianbuttons.entity.ButtonList;
 
-public class PeripheralControlActivity extends Activity {
+public class ButtonConnectActivity extends Activity {
     public static final String EXTRA_NAME = "name";
     public static final String EXTRA_ID = "id";
     private static final String PINCODE = "9318";
@@ -60,7 +60,7 @@ public class PeripheralControlActivity extends Activity {
     private int ledBrightness;
     private int mInterval = 100;
     private boolean backRequested = false;
-    private BleAdapterService bluetoothLeAdapter;
+    private BleConnectService bluetoothLeAdapter;
     private TextToSpeech textToSpeech;
     private SharedPreferences sharedPref;
     private String location;
@@ -68,7 +68,7 @@ public class PeripheralControlActivity extends Activity {
     private final ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
-            bluetoothLeAdapter = ((BleAdapterService.LocalBinder) service).getService();
+            bluetoothLeAdapter = ((BleConnectService.LocalBinder) service).getService();
             bluetoothLeAdapter.setActivityHandler(messageHandler);
         }
 
@@ -86,13 +86,13 @@ public class PeripheralControlActivity extends Activity {
             byte[] b;
 
             switch (msg.what) {
-                case BleAdapterService.MESSAGE:
+                case BleConnectService.MESSAGE:
                     bundle = msg.getData();
-                    String text = bundle.getString(BleAdapterService.PARCEL_TEXT);
+                    String text = bundle.getString(BleConnectService.PARCEL_TEXT);
                     showMsg(text);
                     break;
-                case BleAdapterService.GATT_CONNECTED:
-                    PeripheralControlActivity.this.findViewById(R.id.startBeepingButton).setEnabled(true);
+                case BleConnectService.GATT_CONNECTED:
+                    ButtonConnectActivity.this.findViewById(R.id.startBeepingButton).setEnabled(true);
                     // we're connected
                     showMsg("CONNECTED");
                     if (bluetoothLeAdapter != null) {
@@ -100,28 +100,28 @@ public class PeripheralControlActivity extends Activity {
                     }
                     break;
 
-                case BleAdapterService.GATT_DISCONNECT:
+                case BleConnectService.GATT_DISCONNECT:
                     // we're disconnected
                     showMsg("DISCONNECTED");
-                    PeripheralControlActivity.this.findViewById(R.id.startBeepingButton).setEnabled(false);
+                    ButtonConnectActivity.this.findViewById(R.id.startBeepingButton).setEnabled(false);
                     // stop the rssi reading timer
                     stopTimer();
 
                     if (backRequested) {
-                        PeripheralControlActivity.this.finish();
+                        ButtonConnectActivity.this.finish();
                     }
                     break;
 
-                case BleAdapterService.GATT_SERVICES_DISCOVERED:
+                case BleConnectService.GATT_SERVICES_DISCOVERED:
 
                     // validate services and if ok....
                     List<BluetoothGattService> sList = bluetoothLeAdapter.getSupportedGattServices();
                     boolean ledBrightnessService = false;
 
                     for (BluetoothGattService svc : sList) {
-                        Log.d(ButtonPage.TAG,
+                        Log.d(ButtonListActivity.TAG,
                                 "UUID=" + svc.getUuid().toString().toUpperCase() + " INSTANCE=" + svc.getInstanceId());
-                        if (svc.getUuid().toString().equalsIgnoreCase(BleAdapterService.LED_BRIGHTNESS_SERVICE)) {
+                        if (svc.getUuid().toString().equalsIgnoreCase(BleConnectService.LED_BRIGHTNESS_SERVICE)) {
                             ledBrightnessService = true;
                         }
 
@@ -132,36 +132,36 @@ public class PeripheralControlActivity extends Activity {
                         startReadRssiTimer();
 
 
-                        bluetoothLeAdapter.readCharacteristic(BleAdapterService.LED_BRIGHTNESS_SERVICE,
-                                BleAdapterService.LED_BRIGHTNESS_CHARACTERISTIC);
+                        bluetoothLeAdapter.readCharacteristic(BleConnectService.LED_BRIGHTNESS_SERVICE,
+                                BleConnectService.LED_BRIGHTNESS_CHARACTERISTIC);
 
                     } else {
                         showMsg("Device does not have expected GATT services");
                     }
                     break;
 
-                case BleAdapterService.GATT_REMOTE_RSSI:
+                case BleConnectService.GATT_REMOTE_RSSI:
                     bundle = msg.getData();
-                    int rssi = bundle.getInt(BleAdapterService.PARCEL_RSSI);
-                    PeripheralControlActivity.this.updateRssi(rssi);
-                    Log.d(ButtonPage.TAG, "reading remote rssi " + rssi);
+                    int rssi = bundle.getInt(BleConnectService.PARCEL_RSSI);
+                    ButtonConnectActivity.this.updateRssi(rssi);
+                    Log.d(ButtonListActivity.TAG, "reading remote rssi " + rssi);
                     break;
 
-                case BleAdapterService.GATT_CHARACTERISTIC_READ:
+                case BleConnectService.GATT_CHARACTERISTIC_READ:
                     bundle = msg.getData();
-                    Log.d(ButtonPage.TAG,
-                            "Service=" + Objects.requireNonNull(bundle.get(BleAdapterService.PARCEL_SERVICE_UUID)).toString().toUpperCase()
+                    Log.d(ButtonListActivity.TAG,
+                            "Service=" + Objects.requireNonNull(bundle.get(BleConnectService.PARCEL_SERVICE_UUID)).toString().toUpperCase()
                                     + " Characteristic="
-                                    + Objects.requireNonNull(bundle.get(BleAdapterService.PARCEL_CHARACTERISTIC_UUID)).toString().toUpperCase());
-                    if (Objects.requireNonNull(bundle.get(BleAdapterService.PARCEL_CHARACTERISTIC_UUID)).toString().toUpperCase()
-                            .equals(BleAdapterService.LED_BRIGHTNESS_CHARACTERISTIC)
-                            && Objects.requireNonNull(bundle.get(BleAdapterService.PARCEL_SERVICE_UUID)).toString().toUpperCase()
-                            .equals(BleAdapterService.LED_BRIGHTNESS_SERVICE)) {
-                        b = bundle.getByteArray(BleAdapterService.PARCEL_VALUE);
+                                    + Objects.requireNonNull(bundle.get(BleConnectService.PARCEL_CHARACTERISTIC_UUID)).toString().toUpperCase());
+                    if (Objects.requireNonNull(bundle.get(BleConnectService.PARCEL_CHARACTERISTIC_UUID)).toString().toUpperCase()
+                            .equals(BleConnectService.LED_BRIGHTNESS_CHARACTERISTIC)
+                            && Objects.requireNonNull(bundle.get(BleConnectService.PARCEL_SERVICE_UUID)).toString().toUpperCase()
+                            .equals(BleConnectService.LED_BRIGHTNESS_SERVICE)) {
+                        b = bundle.getByteArray(BleConnectService.PARCEL_VALUE);
                         assert b != null;
                         if (b.length > 0) {
-                            Log.d(ButtonPage.TAG, "b.length if entered (GATT_CHARACTERISTIC_READ) b[0]: " + b[0]);
-                            PeripheralControlActivity.this.findViewById(R.id.rectangle)
+                            Log.d(ButtonListActivity.TAG, "b.length if entered (GATT_CHARACTERISTIC_READ) b[0]: " + b[0]);
+                            ButtonConnectActivity.this.findViewById(R.id.rectangle)
                                     .setVisibility(View.VISIBLE);
 
                             // start off the rssi reading timer
@@ -169,20 +169,20 @@ public class PeripheralControlActivity extends Activity {
                         }
                     }
                     break;
-                case BleAdapterService.GATT_CHARACTERISTIC_WRITTEN:
+                case BleConnectService.GATT_CHARACTERISTIC_WRITTEN:
                     bundle = msg.getData();
-                    Log.d(ButtonPage.TAG,
-                            "Service=" + Objects.requireNonNull(bundle.get(BleAdapterService.PARCEL_SERVICE_UUID)).toString().toUpperCase()
+                    Log.d(ButtonListActivity.TAG,
+                            "Service=" + Objects.requireNonNull(bundle.get(BleConnectService.PARCEL_SERVICE_UUID)).toString().toUpperCase()
                                     + " Characteristic="
-                                    + Objects.requireNonNull(bundle.get(BleAdapterService.PARCEL_CHARACTERISTIC_UUID)).toString().toUpperCase());
-                    if (Objects.requireNonNull(bundle.get(BleAdapterService.PARCEL_CHARACTERISTIC_UUID)).toString().toUpperCase()
-                            .equals(BleAdapterService.LED_BRIGHTNESS_CHARACTERISTIC)
-                            && Objects.requireNonNull(bundle.get(BleAdapterService.PARCEL_SERVICE_UUID)).toString().toUpperCase()
-                            .equals(BleAdapterService.LED_BRIGHTNESS_SERVICE)) {
-                        b = bundle.getByteArray(BleAdapterService.PARCEL_VALUE);
+                                    + Objects.requireNonNull(bundle.get(BleConnectService.PARCEL_CHARACTERISTIC_UUID)).toString().toUpperCase());
+                    if (Objects.requireNonNull(bundle.get(BleConnectService.PARCEL_CHARACTERISTIC_UUID)).toString().toUpperCase()
+                            .equals(BleConnectService.LED_BRIGHTNESS_CHARACTERISTIC)
+                            && Objects.requireNonNull(bundle.get(BleConnectService.PARCEL_SERVICE_UUID)).toString().toUpperCase()
+                            .equals(BleConnectService.LED_BRIGHTNESS_SERVICE)) {
+                        b = bundle.getByteArray(BleConnectService.PARCEL_VALUE);
                         if (b != null && b.length > 0) {
-                            PeripheralControlActivity.this.setLedBrightness((int) b[0]);
-                            Log.d(ButtonPage.TAG, "b.length if entered (GATT_CHARACTERISTIC_WRITTEN) b[0]: " + b[0]);
+                            ButtonConnectActivity.this.setLedBrightness((int) b[0]);
+                            Log.d(ButtonListActivity.TAG, "b.length if entered (GATT_CHARACTERISTIC_WRITTEN) b[0]: " + b[0]);
                         }
                     }
                     break;
@@ -276,10 +276,10 @@ public class PeripheralControlActivity extends Activity {
         });
 
         // connect to the Bluetooth adapter service
-        Intent gattServiceIntent = new Intent(this, BleAdapterService.class);
+        Intent gattServiceIntent = new Intent(this, BleConnectService.class);
         bindService(gattServiceIntent, serviceConnection, BIND_AUTO_CREATE);
 
-        //resetVersion();
+        resetVersion();
         showMsg("Ready");
         timeDelay.postDelayed(new Runnable() {
             @Override
@@ -316,13 +316,13 @@ public class PeripheralControlActivity extends Activity {
     }
 
     public void onBackPressed() {
-        Log.d(ButtonPage.TAG, "onBackPressed");
+        Log.d(ButtonListActivity.TAG, "onBackPressed");
         backRequested = true;
         if (bluetoothLeAdapter.isConnected()) {
             try {
                 bluetoothLeAdapter.disconnect();
             } catch (Exception e) {
-                Log.d(ButtonPage.TAG, "error on going back");
+                Log.d(ButtonListActivity.TAG, "error on going back");
             }
         } else {
             finish();
@@ -383,7 +383,7 @@ public class PeripheralControlActivity extends Activity {
     }
 
     private void showMsg(final String msg) {
-        Log.d(ButtonPage.TAG, msg);
+        Log.d(ButtonListActivity.TAG, msg);
     }
 
     private void connectToButton() {
@@ -448,7 +448,7 @@ public class PeripheralControlActivity extends Activity {
         distance = calculateDistance(rssi);
         String distanceRssi = truncateDecimal(distance) + "m";
         ((TextView) findViewById(R.id.distanceTextView)).setText(distanceRssi);
-        LinearLayout layout = PeripheralControlActivity.this.findViewById(R.id.rectangle);
+        LinearLayout layout = ButtonConnectActivity.this.findViewById(R.id.rectangle);
 
         if (rssi < -80) {
             mInterval = 500;
@@ -567,18 +567,18 @@ public class PeripheralControlActivity extends Activity {
     }
 
     public void onLow(View view) {
-        bluetoothLeAdapter.writeCharacteristic(BleAdapterService.LED_BRIGHTNESS_SERVICE,
-                BleAdapterService.LED_BRIGHTNESS_CHARACTERISTIC, BleAdapterService.LED_BRIGHTNESS_LOW);
+        bluetoothLeAdapter.writeCharacteristic(BleConnectService.LED_BRIGHTNESS_SERVICE,
+                BleConnectService.LED_BRIGHTNESS_CHARACTERISTIC, BleConnectService.LED_BRIGHTNESS_LOW);
     }
 
     public void onMid(View view) {
-        bluetoothLeAdapter.writeCharacteristic(BleAdapterService.LED_BRIGHTNESS_SERVICE,
-                BleAdapterService.LED_BRIGHTNESS_CHARACTERISTIC, BleAdapterService.LED_BRIGHTNESS_MID);
+        bluetoothLeAdapter.writeCharacteristic(BleConnectService.LED_BRIGHTNESS_SERVICE,
+                BleConnectService.LED_BRIGHTNESS_CHARACTERISTIC, BleConnectService.LED_BRIGHTNESS_MID);
     }
 
     public void onHigh(View view) {
-        bluetoothLeAdapter.writeCharacteristic(BleAdapterService.LED_BRIGHTNESS_SERVICE,
-                BleAdapterService.LED_BRIGHTNESS_CHARACTERISTIC, BleAdapterService.LED_BRIGHTNESS_HIGH);
+        bluetoothLeAdapter.writeCharacteristic(BleConnectService.LED_BRIGHTNESS_SERVICE,
+                BleConnectService.LED_BRIGHTNESS_CHARACTERISTIC, BleConnectService.LED_BRIGHTNESS_HIGH);
     }
 
 }

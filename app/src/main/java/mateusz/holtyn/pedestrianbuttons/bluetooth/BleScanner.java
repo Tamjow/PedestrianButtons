@@ -13,13 +13,13 @@ import android.util.Log;
 
 import java.util.Objects;
 
-import mateusz.holtyn.pedestrianbuttons.ui.ButtonPage;
+import mateusz.holtyn.pedestrianbuttons.ui.ButtonListActivity;
 
 public class BleScanner {
     private BluetoothLeScanner scanner = null;
     private BluetoothAdapter bluetoothAdapter;
     private Handler handler = new Handler();
-    private ScanResultsConsumer scanResultsConsumer;
+    private ScanInterface scanInterface;
     private boolean scanning = false;
 
     public BleScanner(Context context) {
@@ -30,36 +30,36 @@ public class BleScanner {
         }
 // check bluetooth is available and on
         if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
-            Log.d(ButtonPage.TAG, "Bluetooth is NOT switched on");
+            Log.d(ButtonListActivity.TAG, "Bluetooth is NOT switched on");
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             enableBtIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(enableBtIntent);
         }
-        Log.d(ButtonPage.TAG, "Bluetooth is switched on");
+        Log.d(ButtonListActivity.TAG, "Bluetooth is switched on");
     }
 
-    public void startScanning(final ScanResultsConsumer scanResultsConsumer, long stopAfterMs) {
+    public void startScanning(final ScanInterface scanInterface, long stopAfterMs) {
         if (scanning) {
-            Log.d(ButtonPage.TAG, "Already scanning so ignoring startScanning request");
+            Log.d(ButtonListActivity.TAG, "Already scanning so ignoring startScanning request");
             return;
         }
-        Log.d(ButtonPage.TAG, "Scanning...");
+        Log.d(ButtonListActivity.TAG, "Scanning...");
         if (scanner == null) {
             scanner = bluetoothAdapter.getBluetoothLeScanner();
-            Log.d(ButtonPage.TAG, "Created BluetoothScanner object");
+            Log.d(ButtonListActivity.TAG, "Created BluetoothScanner object");
         }
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 if (scanning) {
-                    Log.d(ButtonPage.TAG, "Stopping scanning");
+                    Log.d(ButtonListActivity.TAG, "Stopping scanning");
                     scanner.stopScan(scanCallback);
                     setScanning(false);
                 }
             }
         }, stopAfterMs);
 
-        this.scanResultsConsumer = scanResultsConsumer;
+        this.scanInterface = scanInterface;
         ScanSettings settings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
         setScanning(true);
         scanner.startScan(null, settings, scanCallback);
@@ -67,7 +67,7 @@ public class BleScanner {
 
     public void stopScanning() {
         setScanning(false);
-        Log.d(ButtonPage.TAG, "Stopping scanning");
+        Log.d(ButtonListActivity.TAG, "Stopping scanning");
         scanner.stopScan(scanCallback);
     }
 
@@ -76,8 +76,8 @@ public class BleScanner {
             if (!scanning) {
                 return;
             }
-            scanResultsConsumer.candidateBleDevice(result.getDevice(), Objects.requireNonNull(result.getScanRecord()).getBytes(), result.getRssi());
-            Log.d(ButtonPage.TAG, "scan callback device added, rssi: " + result.getRssi());
+            scanInterface.candidateBleDevice(result.getDevice(), Objects.requireNonNull(result.getScanRecord()).getBytes(), result.getRssi());
+            Log.d(ButtonListActivity.TAG, "scan callback device added, rssi: " + result.getRssi());
         }
     };
 
@@ -88,9 +88,9 @@ public class BleScanner {
     private void setScanning(boolean scanning) {
         this.scanning = scanning;
         if (!scanning) {
-            scanResultsConsumer.scanningStopped();
+            scanInterface.scanningStopped();
         } else {
-            scanResultsConsumer.scanningStarted();
+            scanInterface.scanningStarted();
         }
     }
 }

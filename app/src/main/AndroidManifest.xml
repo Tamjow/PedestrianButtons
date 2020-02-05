@@ -20,18 +20,18 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
         <service
-            android:name=".bluetooth.BleAdapterService"
+            android:name=".bluetooth.BleConnectService"
             android:enabled="true" />
 
         <activity
             android:name=".ui.SettingsActivity"
             android:label="@string/title_activity_settings" />
-        <activity android:name=".ui.ButtonPage" />
+        <activity android:name=".ui.ButtonListActivity" />
         <activity
-            android:name=".ui.PeripheralControlActivity"
+            android:name=".ui.ButtonConnectActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
-        <activity android:name=".ui.MainActivity">
+        <activity android:name=".ui.StartingActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

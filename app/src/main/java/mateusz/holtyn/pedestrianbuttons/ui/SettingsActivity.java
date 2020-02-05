@@ -44,7 +44,6 @@ public class SettingsActivity extends AppCompatActivity {
                 .beginTransaction()
                 .replace(R.id.settings, new SettingsFragment())
                 .commit();
-        //setTheme(R.style.CustomPreferenceTheme);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
@@ -53,10 +52,6 @@ public class SettingsActivity extends AppCompatActivity {
 
     public static class SettingsFragment extends PreferenceFragmentCompat {
         private SeekBarPreference seekBar;
-        private static final String TAG_HTTP_URL_CONNECTION = "HTTP_URL_CONNECTION";// Debug log tag.
-        private static final int REQUEST_CODE_SHOW_RESPONSE_TEXT = 1;// Child thread sent message type value to activity main thread Handler.
-        private static final String KEY_RESPONSE_TEXT = "KEY_RESPONSE_TEXT";// The key of message stored server returned data.
-        private static final String REQUEST_METHOD_GET = "GET";// Request method GET. The value must be uppercase.
         private Handler uiUpdater = null;
         private Gson gson;
         private Preference updateButton;
@@ -67,7 +62,7 @@ public class SettingsActivity extends AppCompatActivity {
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
 
             setPreferencesFromResource(R.xml.root_preferences, rootKey);
-            initHandler();
+            updateHandler();
             gson = new Gson();
             seekBar = findPreference("voicespeed");
             sharedPreferences = PreferenceManager.getDefaultSharedPreferences(Objects.requireNonNull(getActivity()));
@@ -99,16 +94,16 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         @SuppressLint("HandlerLeak")
-        private void initHandler() {
+        private void updateHandler() {
             if (uiUpdater == null) {
                 uiUpdater = new Handler() {
                     @Override
                     public void handleMessage(Message msg) {
-                        if (msg.what == REQUEST_CODE_SHOW_RESPONSE_TEXT) {
+                        if (msg.what == 1) {
                             Bundle bundle = msg.getData();
                             if (bundle != null) {
                                 Integer savedVersion = sharedPreferences.getInt("version", 1);
-                                String responseText = bundle.getString(KEY_RESPONSE_TEXT);
+                                String responseText = bundle.getString("responseText");
                                 ButtonList newButtonList = new ButtonList();
                                 newButtonList.setButtonList(new ArrayList<ButtonEntity>());
                                 newButtonList = gson.fromJson(responseText, ButtonList.class);
@@ -131,41 +126,41 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         private void onGetJson() {
-            String reqUrl = "http://185.107.143.31:8080/jerseymoxy/json";
-            startSendHttpRequestThread(reqUrl);
+            String requestUrl = "http://185.107.143.31:8080/jerseymoxy/json";
+            requestHttp(requestUrl);
         }
 
-        private void startSendHttpRequestThread(final String reqUrl) {
-            Thread sendHttpRequestThread = new Thread() {
+        private void requestHttp(final String requestUrl) {
+            Thread requestHttpThread = new Thread() {
                 @Override
                 public void run() {
-                    HttpURLConnection httpConn = null;// Maintain http url connection.
-                    InputStreamReader isReader = null;// Read text input stream.
-                    BufferedReader bufReader = null;// Read text into buffer.
-                    StringBuilder readTextBuf = new StringBuilder();// Save server response text.
+                    HttpURLConnection httpURLConnection = null;
+                    InputStreamReader inputStreamReader = null;
+                    BufferedReader bufferedReader = null;
+                    StringBuilder stringBuilder = new StringBuilder();
 
                     try {
-                        URL url = new URL(reqUrl);// Create a URL object use page url.
-                        httpConn = (HttpURLConnection) url.openConnection();// Open http connection to web server.
-                        httpConn.setRequestMethod(REQUEST_METHOD_GET);// Set http request method to get.
-                        httpConn.setConnectTimeout(10000); // Set connection timeout and read timeout value.
-                        httpConn.setReadTimeout(10000);
-                        InputStream inputStream = httpConn.getInputStream();// Get input stream from web url connection.
-                        isReader = new InputStreamReader(inputStream);// Create input stream reader based on url connection input stream.
-                        bufReader = new BufferedReader(isReader);// Create buffered reader.
-                        String line = bufReader.readLine();// Read line of text from server response.
-                        while (line != null) {// Loop while return line is not null.
-                            readTextBuf.append(line);// Append the text to string buffer.
-                            line = bufReader.readLine();// Continue to read text line.
+                        URL url = new URL(requestUrl);
+                        httpURLConnection = (HttpURLConnection) url.openConnection();
+                        httpURLConnection.setRequestMethod("GET");
+                        httpURLConnection.setConnectTimeout(10000);
+                        httpURLConnection.setReadTimeout(10000);
+                        InputStream inputStream = httpURLConnection.getInputStream();
+                        inputStreamReader = new InputStreamReader(inputStream);
+                        bufferedReader = new BufferedReader(inputStreamReader);
+                        String line = bufferedReader.readLine();
+                        while (line != null) {
+                            stringBuilder.append(line);
+                            line = bufferedReader.readLine();
                         }
-                        Message message = new Message();// Send message to main thread to update response text in TextView after read all.
-                        message.what = REQUEST_CODE_SHOW_RESPONSE_TEXT;// Set message type.
-                        Bundle bundle = new Bundle();// Create a bundle object.
-                        bundle.putString(KEY_RESPONSE_TEXT, readTextBuf.toString());// Put response text in the bundle with the special key.
-                        message.setData(bundle); // Set bundle data in message.
-                        uiUpdater.sendMessage(message); // Send message to main thread Handler to process.
+                        Message message = new Message(); //Create message to be sent to updateHandler
+                        message.what = 1; //Message code to identify the message correctly
+                        Bundle bundle = new Bundle();
+                        bundle.putString("responseText", stringBuilder.toString()); //put the response inside of a bundle identified by a key
+                        message.setData(bundle);
+                        uiUpdater.sendMessage(message); // Send message to updateHandler
                     } catch (IOException ex) {
-                        Log.e(TAG_HTTP_URL_CONNECTION, ex.getMessage(), ex);
+                        Log.e("requestHttp", ex.getMessage(), ex);
                         getActivity().runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -176,17 +171,17 @@ public class SettingsActivity extends AppCompatActivity {
 
                     } finally {
                         try {
-                            if (bufReader != null) {
-                                bufReader.close();
+                            if (bufferedReader != null) {
+                                bufferedReader.close();
                             }
-                            if (isReader != null) {
-                                isReader.close();
+                            if (inputStreamReader != null) {
+                                inputStreamReader.close();
                             }
-                            if (httpConn != null) {
-                                httpConn.disconnect();
+                            if (httpURLConnection != null) {
+                                httpURLConnection.disconnect();
                             }
                         } catch (IOException ex) {
-                            Log.e(TAG_HTTP_URL_CONNECTION, ex.getMessage(), ex);
+                            Log.e("requestHttp", ex.getMessage(), ex);
                             getActivity().runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -198,7 +193,7 @@ public class SettingsActivity extends AppCompatActivity {
                     }
                 }
             };
-            sendHttpRequestThread.start();// Start the child thread to request web page.
+            requestHttpThread.start();
         }
     }
 }

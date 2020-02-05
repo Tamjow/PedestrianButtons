@@ -29,9 +29,9 @@ import java.util.ArrayList;
 
 import mateusz.holtyn.pedestrianbuttons.R;
 import mateusz.holtyn.pedestrianbuttons.bluetooth.BleScanner;
-import mateusz.holtyn.pedestrianbuttons.bluetooth.ScanResultsConsumer;
+import mateusz.holtyn.pedestrianbuttons.bluetooth.ScanInterface;
 
-public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer {
+public class ButtonListActivity extends AppCompatActivity implements ScanInterface {
 
     private boolean bleScanning = false;
     private ListAdapter bleDeviceListAdapter;
@@ -72,10 +72,10 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
                     toast.cancel();
                 }
 
-                Intent intent = new Intent(ButtonPage.this,
-                        PeripheralControlActivity.class);
-                intent.putExtra(PeripheralControlActivity.EXTRA_NAME, device.getName());
-                intent.putExtra(PeripheralControlActivity.EXTRA_ID, device.getAddress());
+                Intent intent = new Intent(ButtonListActivity.this,
+                        ButtonConnectActivity.class);
+                intent.putExtra(ButtonConnectActivity.EXTRA_NAME, device.getName());
+                intent.putExtra(ButtonConnectActivity.EXTRA_ID, device.getAddress());
                 startActivity(intent);
             }
         });
@@ -87,7 +87,7 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                ((TextView) ButtonPage.this.findViewById(R.id.scanButton)).setText(FIND);
+                ((TextView) ButtonListActivity.this.findViewById(R.id.scanButton)).setText(FIND);
             }
         });
 
@@ -201,7 +201,7 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
         public View getView(int i, View view, ViewGroup viewGroup) {
             ViewHolder viewHolder;
             if (view == null) {
-                view = ButtonPage.this.getLayoutInflater().inflate(R.layout.list,
+                view = ButtonListActivity.this.getLayoutInflater().inflate(R.layout.list,
                         null);
                 viewHolder = new ViewHolder();
                 viewHolder.text = view.findViewById(R.id.textView);
@@ -217,8 +217,8 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
             if (deviceName != null && deviceName.length() > 0) {
                 viewHolder.text.setText(deviceName);
             } else {
-//                viewHolder.text.setText("Unknown device");
-                viewHolder.text.setText("TEST123");
+                viewHolder.text.setText("Unknown");
+                //viewHolder.text.setText("TEST123");
             }
             viewHolder.distance.setText(truncateDecimal(distance) + "m");
             if (i % 2 == 1) {
@@ -284,7 +284,7 @@ public class ButtonPage extends AppCompatActivity implements ScanResultsConsumer
             builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
                 public void onDismiss(DialogInterface dialog) {
                     Log.d(TAG, "Requesting permissions after explanation");
-                    ActivityCompat.requestPermissions(ButtonPage.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
+                    ActivityCompat.requestPermissions(ButtonListActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
                 }
             });
             builder.show();
