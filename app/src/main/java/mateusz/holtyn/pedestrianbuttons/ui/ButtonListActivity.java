@@ -183,7 +183,7 @@ public class ButtonListActivity extends AppCompatActivity implements ScanInterfa
             @Override
             public void run() {
 
-                if (device.getName() != null && device.getName().contains("KSK")) {
+                if (device.getName() != null && device.getName().contains("KSK") && rssi > -70) {
                     bleDeviceListAdapter.addDevice(device, rssi);
                     Log.d(TAG, "candidate ble device being added, rssi: " + rssi + " addr: " + device.getAddress());
                     bleDeviceListAdapter.notifyDataSetChanged();
