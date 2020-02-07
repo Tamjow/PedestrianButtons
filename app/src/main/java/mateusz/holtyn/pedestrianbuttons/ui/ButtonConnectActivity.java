@@ -47,7 +47,7 @@ import mateusz.holtyn.pedestrianbuttons.entity.ButtonList;
 public class ButtonConnectActivity extends Activity {
     public static final String EXTRA_NAME = "name";
     public static final String EXTRA_ID = "id";
-    private static final String PINCODE = "9318";
+    private static final String PIN_CODE = "1111";
     private String deviceName;
     private String deviceAddress;
     private Integer deviceId;
@@ -161,9 +161,7 @@ public class ButtonConnectActivity extends Activity {
                         assert b != null;
                         if (b.length > 0) {
                             Log.d(ButtonListActivity.TAG, "b.length if entered (GATT_CHARACTERISTIC_READ) b[0]: " + b[0]);
-                            ButtonConnectActivity.this.findViewById(R.id.rectangle)
-                                    .setVisibility(View.VISIBLE);
-
+                            ButtonConnectActivity.this.setLedBrightness((int) b[0]);
                             // start off the rssi reading timer
                             startReadRssiTimer();
                         }
@@ -191,15 +189,7 @@ public class ButtonConnectActivity extends Activity {
         }
     };
 
-    private void closeKeyboard() {
-        View view = this.getCurrentFocus();
-        if (view != null) {
-            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            if (imm != null) {
-                imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-            }
-        }
-    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -218,7 +208,7 @@ public class ButtonConnectActivity extends Activity {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 
-                if (passwordText.getText().toString().equals(PINCODE)) {
+                if (passwordText.getText().toString().equals(PIN_CODE)) {
                     closeKeyboard();
                     lowButton.setVisibility(View.VISIBLE);
                     lowButton.setEnabled(true);
@@ -230,11 +220,9 @@ public class ButtonConnectActivity extends Activity {
                     simpleToast("PIN correct");
                 } else if (passwordText.getText().toString().isEmpty()) {
                     passwordText.setText(null);
-                    closeKeyboard();
                     simpleToast("PIN empty");
                 } else {
                     passwordText.setText(null);
-                    closeKeyboard();
                     simpleToast("Wrong pin");
                 }
 
@@ -252,7 +240,7 @@ public class ButtonConnectActivity extends Activity {
         //initialize tts
         initTTS();
         // show the device name
-        nameAddress = "DEVICE NAME: " + deviceName;
+        nameAddress = "BUTTON NAME: " + deviceName;
 
         ((TextView) this.findViewById(R.id.nameTextView))
                 .setText(nameAddress);
@@ -279,7 +267,7 @@ public class ButtonConnectActivity extends Activity {
         Intent gattServiceIntent = new Intent(this, BleConnectService.class);
         bindService(gattServiceIntent, serviceConnection, BIND_AUTO_CREATE);
 
-        resetVersion();
+        //resetVersion();
         showMsg("Ready");
         timeDelay.postDelayed(new Runnable() {
             @Override
@@ -290,6 +278,15 @@ public class ButtonConnectActivity extends Activity {
 
     }
 
+    private void closeKeyboard() {
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+            }
+        }
+    }
     private void setLedBrightness(int ledBrightness) {
         this.ledBrightness = ledBrightness;
         lowButton.setTextColor(Color.BLACK);
@@ -309,7 +306,7 @@ public class ButtonConnectActivity extends Activity {
     }
 
     //helper method to reset version programmatically, used for testing
-    public void resetVersion() {
+    private void resetVersion() {
         SharedPreferences.Editor editor = sharedPref.edit();
         editor.putInt("version", 0);
         editor.apply();
@@ -360,21 +357,20 @@ public class ButtonConnectActivity extends Activity {
     }
 
     public void onTTS(View view) {
-        readDeviceName();
-
+        readDeviceLocation();
     }
 
-    private void readDeviceName() {
+    private void readDeviceLocation() {
         updateVoice();
         if (deviceName != null) {
             String ttsString = "you are on " + location;
             Log.i("TTS", "button clicked: " + ttsString);
-            int speechStatus = textToSpeech.speak(ttsString, TextToSpeech.QUEUE_FLUSH, null, "deviceNameTts");
+            int speechStatus = textToSpeech.speak(ttsString, TextToSpeech.QUEUE_FLUSH, null, "deviceLocationTts");
             if (speechStatus == TextToSpeech.ERROR) {
                 Log.e("TTS", "Error in converting Text to Speech!");
             }
         } else {
-            int speechStatus = textToSpeech.speak("location not found", TextToSpeech.QUEUE_FLUSH, null, "deviceNameEmptyTts");
+            int speechStatus = textToSpeech.speak("location not found", TextToSpeech.QUEUE_FLUSH, null, "deviceLocationEmptyTts");
             if (speechStatus == TextToSpeech.ERROR) {
                 Log.e("TTS", "Error in converting Text to Speech!");
             }
@@ -391,7 +387,7 @@ public class ButtonConnectActivity extends Activity {
         if (bluetoothLeAdapter != null) {
             if (bluetoothLeAdapter.connect(deviceAddress)) {
                 if (sharedPref.getBoolean(SettingsActivity.KEY_PREF_AUTOVOICE, true)) {
-                    readDeviceName();
+                    readDeviceLocation();
                 }
             } else {
                 showMsg("connectToButton: failed to connect");

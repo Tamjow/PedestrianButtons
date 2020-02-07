@@ -76,7 +76,7 @@ public class BleScanner {
             if (!scanning) {
                 return;
             }
-            scanInterface.candidateBleDevice(result.getDevice(), Objects.requireNonNull(result.getScanRecord()).getBytes(), result.getRssi());
+            scanInterface.candidateBleDevice(result.getDevice(), result.getRssi());
             Log.d(ButtonListActivity.TAG, "scan callback device added, rssi: " + result.getRssi());
         }
     };

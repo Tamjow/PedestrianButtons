@@ -36,7 +36,6 @@ public class BleConnectService extends Service {
     public static final int GATT_CHARACTERISTIC_WRITTEN = 5;
     public static final int GATT_REMOTE_RSSI = 6;
     public static final int MESSAGE = 7;
-    public static final int NOTIFICATION_OR_INDICATION_RECEIVED = 8;
     // message params
     public static final String PARCEL_CHARACTERISTIC_UUID = "CHARACTERISTIC_UUID";
     public static final String PARCEL_SERVICE_UUID = "SERVICE_UUID";
@@ -258,17 +257,6 @@ public class BleConnectService extends Service {
             }
         }
 
-        @Override
-        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            Bundle bundle = new Bundle();
-            bundle.putString(PARCEL_CHARACTERISTIC_UUID, characteristic.getUuid().toString());
-            bundle.putString(PARCEL_SERVICE_UUID, characteristic.getService().getUuid().toString());
-            bundle.putByteArray(PARCEL_VALUE, characteristic.getValue());
-            // notifications and indications are both communicated from here in this way
-            Message msg = Message.obtain(activityHandler, NOTIFICATION_OR_INDICATION_RECEIVED);
-            msg.setData(bundle);
-            msg.sendToTarget();
-        }
 
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             Log.d(ButtonListActivity.TAG, "onCharacteristicWrite");

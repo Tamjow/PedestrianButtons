@@ -79,7 +79,14 @@ public class ButtonListActivity extends AppCompatActivity implements ScanInterfa
                 startActivity(intent);
             }
         });
-        onScanNoArg();
+        Button scanBut = findViewById(R.id.scanButton);
+        scanBut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onScan();
+            }
+        });
+        onScan();
 
     }
 
@@ -121,6 +128,8 @@ public class ButtonListActivity extends AppCompatActivity implements ScanInterfa
         }
     }
 
+    // distance function data from https://github.com/AltBeacon/android-beacon-library
+
     public double calculateDistance(int rssi) {
         int txPower = -59; //hard coded power value. Usually ranges between -59 to -65
 
@@ -138,7 +147,7 @@ public class ButtonListActivity extends AppCompatActivity implements ScanInterfa
     }
 
     @Override
-    public void candidateBleDevice(final BluetoothDevice device, byte[] scanRecord, final int rssi) {
+    public void candidateBleDevice(final BluetoothDevice device, final int rssi) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -218,7 +227,6 @@ public class ButtonListActivity extends AppCompatActivity implements ScanInterfa
                 viewHolder.text.setText(deviceName);
             } else {
                 viewHolder.text.setText("Unknown");
-                //viewHolder.text.setText("TEST123");
             }
             viewHolder.distance.setText(truncateDecimal(distance) + "m");
             if (i % 2 == 1) {
@@ -234,26 +242,8 @@ public class ButtonListActivity extends AppCompatActivity implements ScanInterfa
         }
     }
 
-    public void onScan(View view) {
-        if (!bleScanner.isScanning()) {
-            Log.d(TAG, "Not currently scanning");
-            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-                    != PackageManager.PERMISSION_GRANTED) {
-                permissionsGranted = false;
-                requestLocationPermission();
-            } else {
-                Log.i(TAG, "Location permission has already been granted. Starting scanning.");
-                permissionsGranted = true;
-            }
 
-            startScanning();
-        } else {
-            Log.d(TAG, "Already scanning");
-            bleScanner.stopScanning();
-        }
-    }
-
-    public void onScanNoArg() {
+    public void onScan() {
 
         if (!bleScanner.isScanning()) {
             Log.d(TAG, "Not currently scanning");
