@@ -240,7 +240,7 @@ public class ButtonConnectActivity extends Activity {
         //initialize tts
         initTTS();
         // show the device name
-        nameAddress = "BUTTON NAME: " + deviceName;
+        nameAddress = "BUTTON: " + deviceName;
 
         ((TextView) this.findViewById(R.id.nameTextView))
                 .setText(nameAddress);
@@ -252,11 +252,11 @@ public class ButtonConnectActivity extends Activity {
             public void onClick(View v) {
                 if (!isBeeping) {
                     startBeep();
-                    startBeeping.setText("Stop beeping");
+                    startBeeping.setText("Stop");
                     isBeeping = true;
                 } else {
                     stopBeep();
-                    startBeeping.setText("Start beeping");
+                    startBeeping.setText("Beep");
                     isBeeping = false;
                 }
 
@@ -339,7 +339,10 @@ public class ButtonConnectActivity extends Activity {
     };
 
     private void getLocation() {
-        String locations = sharedPref.getString("locations", "no locations");
+        //String locations = sharedPref.getString("locations", "no locations");
+        String defaultLocations = "{\"buttonList\":[{\"id\":0,\"location\":\"Union street between Borough High street and Redcross Way, London\"},{\"id\":1,\"location\":\"The corner of Scoresby Street and Blackfriars Road, London\"},{\"id\":2,\"location\":\"The corner of Coventry street and Shaftesbury avenue near Picadilly Circus, London\"},{\"id\":3,\"location\":\"Tigers way between lancaster road and welford road next to nelson mandela park, Leicester\"},{\"id\":4,\"location\":\"The corner of Vaughan Way and Church Gate, Leicester\"},{\"id\":5,\"location\":\"South street between palace gate and western way, Exeter\"},{\"id\":6,\"location\":\"the corner of castle street and little castle street next to tibetan street food, Exeter\"},{\"id\":7,\"location\":\"Stanley Street between Dale street and Victoria street, Liverpool\"},{\"id\":8,\"location\":\"the corner of Sir Thomas street and whitechapel, Liverpool\"},{\"id\":9,\"location\":\"the corner of upper parliament street and bedford street, Liverpool\"}],\"version\":2}";
+        String locations = sharedPref.getString("locations", defaultLocations);
+        Log.d("locationstag", locations);
         Gson gson = new Gson();
         ButtonList newButtonList = new ButtonList();
         newButtonList.setButtonList(new ArrayList<ButtonEntity>());
@@ -492,38 +495,39 @@ public class ButtonConnectActivity extends Activity {
         String voiceName = sharedPref.getString(SettingsActivity.KEY_PREF_VOICE, "gbf1");
         voiceSpeed = sharedPref.getInt(SettingsActivity.KEY_PREF_SPEED, 10);
         voiceSpeedFloat = (float) (voiceSpeed * 0.1);
+        textToSpeech.setLanguage(Locale.ENGLISH);
         textToSpeech.setSpeechRate(voiceSpeedFloat);
         switch (voiceName) {
             case "gbf1":
-                Voice voice = new Voice("en-gb-x-fis#female_1-local", Locale.getDefault(), 1, 1, false, null);
+                Voice voice = new Voice("en-gb-x-fis#female_1-local", Locale.UK, 1, 1, false, null);
                 textToSpeech.setVoice(voice);
                 break;
             case "gbf2":
-                voice = new Voice("en-gb-x-fis#female_3-local", Locale.getDefault(), 1, 1, false, null);
+                voice = new Voice("en-gb-x-fis#female_3-local", Locale.UK, 1, 1, false, null);
                 textToSpeech.setVoice(voice);
                 break;
             case "gbm1":
-                voice = new Voice("en-gb-x-fis#male_1-local", Locale.getDefault(), 1, 1, false, null);
+                voice = new Voice("en-gb-x-fis#male_1-local", Locale.UK, 1, 1, false, null);
                 textToSpeech.setVoice(voice);
                 break;
             case "gbm2":
-                voice = new Voice("en-gb-x-fis#male_2-local", Locale.getDefault(), 1, 1, false, null);
+                voice = new Voice("en-gb-x-fis#male_2-local", Locale.UK, 1, 1, false, null);
                 textToSpeech.setVoice(voice);
                 break;
             case "usf1":
-                voice = new Voice("en-us-x-sfg#female_1-local", Locale.getDefault(), 1, 1, false, null);
+                voice = new Voice("en-us-x-sfg#female_1-local", Locale.US, 1, 1, false, null);
                 textToSpeech.setVoice(voice);
                 break;
             case "usf2":
-                voice = new Voice("en-us-x-sfg#female_2-local", Locale.getDefault(), 1, 1, false, null);
+                voice = new Voice("en-us-x-sfg#female_2-local", Locale.US, 1, 1, false, null);
                 textToSpeech.setVoice(voice);
                 break;
             case "usm1":
-                voice = new Voice("en-us-x-sfg#male_1-local", Locale.getDefault(), 1, 1, false, null);
+                voice = new Voice("en-us-x-sfg#male_1-local", Locale.US, 1, 1, false, null);
                 textToSpeech.setVoice(voice);
                 break;
             case "usm2":
-                voice = new Voice("en-us-x-sfg#male_2-local", Locale.getDefault(), 1, 1, false, null);
+                voice = new Voice("en-us-x-sfg#male_2-local", Locale.US, 1, 1, false, null);
                 textToSpeech.setVoice(voice);
                 break;
         }

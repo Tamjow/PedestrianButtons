@@ -2,12 +2,14 @@ package mateusz.holtyn.pedestrianbuttons.ui;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -39,15 +41,17 @@ public class ButtonListActivity extends AppCompatActivity implements ScanInterfa
     private static final long SCAN_TIMEOUT = 5000;
     private static final int REQUEST_LOCATION = 0;
     private boolean permissionsGranted = false;
+    private boolean bluetoothEnabled = true;
     private Toast toast;
+
     static class ViewHolder {
         TextView text;
         TextView distance;
     }
 
     public static final String TAG = "PedestrianButtons";
-    public static final String FIND = "SEARCH AGAIN";
-    public static final String STOP_SCANNING = "Stop Scanning";
+    public static final String FIND = "SEARCH";
+    public static final String STOP_SCANNING = "STOP";
     public static final String SCANNING = "Scanning";
 
     @Override
@@ -55,6 +59,8 @@ public class ButtonListActivity extends AppCompatActivity implements ScanInterfa
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_button_page);
         setButtonText();
+        Handler timeDelay = new Handler();
+        checkBluetoothEnabled();
         bleScanner = new BleScanner(this.getApplicationContext());
         bleDeviceListAdapter = new ListAdapter();
         ListView listView = this.findViewById(R.id.deviceList);
@@ -80,14 +86,39 @@ public class ButtonListActivity extends AppCompatActivity implements ScanInterfa
             }
         });
         Button scanBut = findViewById(R.id.scanButton);
-        scanBut.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onScan();
-            }
-        });
-        onScan();
+        if (bluetoothEnabled) {
 
+            scanBut.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    onScan();
+                }
+            });
+            onScan();
+        } else {
+            toast = Toast.makeText(this, "BLUETOOTH NOT ENABLED, GOING BACK", Toast.LENGTH_SHORT);
+            toast.show();
+            timeDelay.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    finish();
+//                    Intent intent = new Intent(ButtonListActivity.this, StartingActivity.class);
+//                    startActivity(intent);
+                }
+            }, 2000);
+        }
+
+    }
+
+    private void checkBluetoothEnabled() {
+        BluetoothAdapter bluetooth_adapter = BluetoothAdapter.getDefaultAdapter();
+        if (bluetooth_adapter == null || !bluetooth_adapter.isEnabled()) {
+            bluetoothEnabled = false;
+            Log.d(ButtonListActivity.TAG, "Bluetooth is NOT switched on");
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            enableBtIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(enableBtIntent);
+        }
     }
 
     private void setButtonText() {
@@ -152,7 +183,7 @@ public class ButtonListActivity extends AppCompatActivity implements ScanInterfa
             @Override
             public void run() {
 
-                if (device.getName() != null && device.getName().contains("KSK") && rssi > -70) {
+                if (device.getName() != null && device.getName().contains("KSK")) {
                     bleDeviceListAdapter.addDevice(device, rssi);
                     Log.d(TAG, "candidate ble device being added, rssi: " + rssi + " addr: " + device.getAddress());
                     bleDeviceListAdapter.notifyDataSetChanged();
